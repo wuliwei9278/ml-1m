@@ -37,11 +37,11 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 
 		mm = nonzeros(m[:,i])
 
-		t = zeros(1, len);
+		t = zeros(len);
 		for j in 1:(len - 1)
-			J = d2_bar[j];
+#			J = d2_bar[j];
 			for k in (j + 1):len
-				K = d2_bar[k];
+#				K = d2_bar[k];
 				if vals_d2_bar[j] > vals_d2_bar[k]
 #		println(ff, i, " ", J, " ", K);
 					mask = mm[j] - mm[k];
@@ -71,18 +71,32 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 	return g
 end
 
-function comp_m(U, V, X, d1, d2, rows, vals)
-	m = spzeros(d2,d1);
-	for i = 1:d1
-		tmp = nzrange(X, i)
+
+function comp_m(U, V, X, d1, d2, rows, vals, cols)
+
+	mvals = zeros(nnz(X))
+	cc=0
+	for i=1:d1
+		tmp = nzrange(X,i)
 		d2_bar = rows[tmp];
-		ui = U[:, i]
-## Slow: access one element of sparse matrix; can be improved but currently not the bottleneck
+		ui = U[:,i]
 		for j in d2_bar
-			m[j,i] = dot(ui,V[:,j])
+			cc+=1
+			mvals[cc] = dot(ui, V[:,j])
 		end
 	end
-	return m
+	return sparse(rows, cols, mvals, d2, d1);
+
+#	m = spzeros(d2,d1);
+#	for i = 1:d1
+#		tmp = nzrange(X, i)
+#		d2_bar = rows[tmp];
+#		ui = U[:, i]
+#		for j in d2_bar
+#			m[j,i] = dot(ui,V[:,j])
+#		end
+#	end
+#	return m
 end
 
 
@@ -134,33 +148,55 @@ function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 		cc=0
 		for q in d2_bar
 			cc+=1
-			a_q = a[(q-1)*r+1:q*r]
-			b[cc] = dot(ui, a_q)
+#			a_q = a[(q-1)*r+1:q*r]
+			b[cc] = dot(ui, a[(q-1)*r+1:q*r])
 		end
 
 		mm = nonzeros(m[:,i])
 
-#		for j in 1:(len - 1)
-		for j in 1:len
-			p = d2_bar[j];
-			c_p = 0.0
-			for k in 1:len
-#			for k in (j + 1):len
-#				q = d2_bar[k]
-				if vals_d2_bar[j] == vals_d2_bar[k]
+		cpvals = zeros(len)
+		for j in 1:(len - 1)
+			jval = vals_d2_bar[j]
+			for k in (j + 1):len
+				kval = vals_d2_bar[k]
+				if jval == kval
 					continue
-				elseif vals_d2_bar[j] > vals_d2_bar[k]
+				elseif jval > kval
 					y_ipq = 1.0
-				elseif vals_d2_bar[k] > vals_d2_bar[j]
+				else 
 					y_ipq = -1.0
 				end
 				mask = y_ipq * (mm[j] - mm[k])
 				if mask < 1.0
-					c_p += 2.0 * (b[j] - b[k])
+					ddd = 2.0*(b[j]-b[k])
+					cpvals[j] += ddd
+					cpvals[k] -= ddd
 				end
 			end
-			Ha[(p - 1) * r + 1 : p * r] += c_p*ui
 		end
+		for j in 1:len
+			p = d2_bar[j]
+			Ha[(p - 1) * r + 1 : p * r] += cpvals[j]*ui
+		end
+
+#		for j in 1:len
+#			p = d2_bar[j];
+#			c_p = 0.0
+#			for k in 1:len
+#				if vals_d2_bar[j] == vals_d2_bar[k]
+#					continue
+#				elseif vals_d2_bar[j] > vals_d2_bar[k]
+#					y_ipq = 1.0
+#				elseif vals_d2_bar[k] > vals_d2_bar[j]
+#					y_ipq = -1.0
+#				end
+#				mask = y_ipq * (mm[j] - mm[k])
+#				if mask < 1.0
+#					c_p += 2.0 * (b[j] - b[k])
+#				end
+#			end
+#			Ha[(p - 1) * r + 1 : p * r] += c_p*ui
+#		end
 	end
 	return Ha
 end	
@@ -213,7 +249,6 @@ function solve_delta(g, m, U, X, r, d1, d2, lambda, rows, vals)
 	p = -rr
 	err = norm(rr) * 10.0^-2
 	for k in 1:10
-		#println(k)
 		#Hp = compute_Ha(p, m, U, X, r, d1, d2, lambda, rows, vals)
 		Hp = compute_Ha_new(p, m, U, X, r, d1, d2, lambda, rows, vals)
 		alpha = -dot(rr, p) / dot(p, Hp)
@@ -260,19 +295,20 @@ function objective(m, U, V, X, d1, lambda, rows, vals)
 	return res
 end
 
-function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize)
+function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	# g,m = obtain_g(U, V, X, d1, d2, lambda, rows, vals)
-	m = comp_m(U, V, X, d1, d2, rows, vals);
- 	g = obtain_g_new(U, V, X, d1, d2, lambda, rows, vals,m)
+	m = comp_m(U, V, X, d1, d2, rows, vals, cols);
+  	g = obtain_g_new(U, V, X, d1, d2, lambda, rows, vals,m)
 	delta = solve_delta(vec(g), m, U, X, r, d1, d2, lambda, rows, vals)
 	delta = reshape(delta, size(V))
 	prev_obj = objective(m, U, V, X, d1, lambda, rows, vals)
 
 	Vold = V;
 	s = stepsize
+	new_obj=0.0
 	for iter=1:20
 		V = Vold - s * delta
-		m = comp_m(U, V, X, d1, d2, rows, vals);
+		m = comp_m(U, V, X, d1, d2, rows, vals, cols);
 		new_obj = objective(m, U, V, X, d1, lambda, rows, vals)
 		println("Line Search iter ", iter, " Prev Obj ", prev_obj, " New Obj ", new_obj)
 		if (new_obj < prev_obj)
@@ -286,10 +322,10 @@ function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize)
 	for ii=1:r
 		for jj = 1:d2
 			VV[ii,jj] = V[ii,jj]
-			end
-			end
+		end
+	end
 
-	return VV, m
+	return VV, m, new_obj
 end
 
 # Fix V, update U
@@ -456,26 +492,22 @@ end
 
 function obtain_g_u_new(i, ui, V, X, r, d2, rows, vals, lambda, mm)
 	tmp = nzrange(X, i)
+	len = size(tmp)[1];
+	if len==0
+		return g, g, 0
+	end
 	d2_bar = rows[tmp];
-#	m = spzeros(1, d2)
-#	# need to get new m for updated V
-#	for j in d2_bar
-#		m[1,j] = dot(ui,V[:,j])
-#	end
 
 	vals_d2_bar = vals[tmp];
-	len = size(d2_bar)[1];
 	num = round(Int64, len*(len-1)/2)
-	D = zeros(num)
+	D = zeros(Int, num)
 
 	g = zeros(r)
 	tmp_vals = zeros(len)
 
 	c = 0
-	for j in 1:len
-#		p = d2_bar[j];
-		for k in (j + 1):len
-#			q = d2_bar[k]
+	for j = 1:len-1
+		for k = (j + 1):len
 			if vals_d2_bar[j] == vals_d2_bar[k]
 				continue
 			elseif vals_d2_bar[j] > vals_d2_bar[k]
@@ -485,13 +517,11 @@ function obtain_g_u_new(i, ui, V, X, r, d2, rows, vals, lambda, mm)
 			end
 			c+=1
 				mask = y_ipq * (mm[j]-mm[k])
-#			mask = y_ipq * (m[1, p] - m[1, q])
 			if mask < 1.0
 						D[c] = 1.0;
 						aaa = 2*(1-mask)*y_ipq;
 						tmp_vals[j] -= aaa;
 						tmp_vals[k] += aaa;
-#g += 2*( 1-mask)*( V[:,q]-Vj)*y_ipq ;
 			end
 		end
 	end
@@ -511,7 +541,7 @@ function obtain_Hs_new(i, V, X, r, d2, rows, vals, lambda, D, s)
 	vals_d2_bar = vals[tmp];
 	len = size(d2_bar)[1];
 
-	m = zeros(1, len)
+	m = zeros(len)
 	# need to get new m for updated V
 	c=0;
 	for j in d2_bar
@@ -532,7 +562,7 @@ function obtain_Hs_new(i, V, X, r, d2, rows, vals, lambda, D, s)
 			c+=1
 			mask = m[j] - m[k];
 			if D[c] > 0.0
-						aaa = 2*mask;
+						aaa = 2.0*mask;
 						tmp_vals[j] += aaa;
 						tmp_vals[k] -= aaa;
 			end
@@ -551,6 +581,9 @@ end
 
 
 function update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm)
+
+	new_obj = 0
+	
 	g, D,c = obtain_g_u_new(i, ui, V, X, r, d2, rows, vals, lambda, mm);
 
 	prev_obj = objective_u_new(i, X, lambda, rows, vals, ui, mm)
@@ -559,8 +592,6 @@ function update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm)
 	end
 	delta = solve_delta_u(g, D, lambda, i, V, r, d2, vals, X, rows)
 
-
-	new_obj = 0
 	s = stepsize;
 	for inneriter=1:20
 		ui_new = ui - s * delta;
@@ -585,6 +616,7 @@ end
 function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 	total_obj_new = lambda/2*(vecnorm(V)^2)
 	obj_new = 0
+
 	for i in 1:d1
 		ui = U[:, i]
 		prev = 0
@@ -607,8 +639,8 @@ function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		total_obj_new += obj_new
 		U[:, i] = ui
 	end
-	println(" OBJNEW: ", total_obj_new)
-	return U
+#	println(" OBJNEW: ", total_obj_new)
+	return U, total_obj_new
 end
 
 X = readdlm("MovieLens1m.csv", ',' , Int64);
@@ -630,7 +662,19 @@ function main(x, y, v)
 #X = X[1:1000, 1:2000];
 	rows = rowvals(X);
 	vals = nonzeros(X);
+	cols = zeros(Int, size(vals)[1]);
+
 	d2, d1 = size(X);
+	cc=0;
+	for i=1:d1
+		tmp = nzrange(X, i);
+		nowlen = size(tmp)[1];
+		for j=1:nowlen
+			cc+=1
+			cols[cc] = i
+		end
+	end
+
 	r = 100; 
 	lambda = 5000;
 	# initialize U, V
@@ -638,12 +682,17 @@ function main(x, y, v)
 	U = 0.1*randn(r, d1);
 	V = 0.1*randn(r, d2);
 	stepsize = 1
-	for iter in 1:20
-		println("Outer iteration: ", iter)
 
-@time V, m  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize)
+	totaltime = 0;
+	for iter in 1:20
+		tic();
+#	println("Outer iteration: ", iter)
+
+@time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	
-@time U = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
+@time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
+		totaltime += toc();
+		println("Iter ", iter, " Time ", totaltime, " obj ", nowobj)
 
 	end
 #	return V, U
