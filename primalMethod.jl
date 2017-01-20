@@ -26,6 +26,8 @@ end
 
 function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 	g = lambda * V;
+
+#	ff = open("pppp", "w");
 	for i = 1:d1
 		tmp = nzrange(X, i)
 		d2_bar = rows[tmp];
@@ -37,10 +39,11 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 
 		t = zeros(1, len);
 		for j in 1:(len - 1)
-#			J = d2_bar[j];
+			J = d2_bar[j];
 			for k in (j + 1):len
-#				K = d2_bar[k];
+				K = d2_bar[k];
 				if vals_d2_bar[j] > vals_d2_bar[k]
+#		println(ff, i, " ", J, " ", K);
 					mask = mm[j] - mm[k];
 					if mask < 1.0
 						s_jk = 2.0 * (mask - 1.0)
@@ -48,6 +51,7 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 						t[k] -= s_jk
 					end
 				elseif vals_d2_bar[k] > vals_d2_bar[j]
+#					println(ff, i, " ", K, " ", J);
 					mask = mm[k]-mm[j];
 					if mask < 1.0
 						s_jk = 2.0 * (mask - 1.0)
@@ -63,6 +67,7 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 			g[:,J] += ui * t[j]
 		end
 	end
+#	close(ff)
 	return g
 end
 
@@ -390,7 +395,7 @@ function compute_mm(i, ui, V, X, r, d2, rows, vals)
 end
 
 
-function objective_u_new(i, m, X, lambda, rows, vals, ui, mm)
+function objective_u_new(i, X, lambda, rows, vals, ui, mm)
 	res = lambda / 2 * (vecnorm(ui) ^ 2)
 	tmp = nzrange(X, i)
 	d2_bar = rows[tmp];
@@ -544,7 +549,7 @@ end
 function update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm)
 	g, D,c = obtain_g_u_new(i, ui, V, X, r, d2, rows, vals, lambda, mm);
 
-	prev_obj = objective_u_new(i, m, X, lambda, rows, vals, ui, mm)
+	prev_obj = objective_u_new(i, X, lambda, rows, vals, ui, mm)
 	if (c == 0.0) || (norm(g)<1e-4)
 		return ui, prev_obj, mm
 	end
@@ -555,7 +560,7 @@ function update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm)
 	for inneriter=1:20
 		ui_new = ui - s * delta;
 		mm_new = compute_mm(i, ui_new, V, X, r, d2, rows, vals);
-		new_obj = objective_u_new(i, m, X, lambda, rows, vals, ui_new, mm_new);
+		new_obj = objective_u_new(i, X, lambda, rows, vals, ui_new, mm_new);
 		if ( new_obj < prev_obj)
 			break;
 		else
@@ -627,11 +632,11 @@ function main(x, y, v)
 	U = 0.1*randn(r, d1);
 	V = 0.1*randn(r, d2);
 	stepsize = 1
-	for iter in 1:10
+	for iter in 1:1
 		println("Outer iteration: ", iter)
 
 	@time	V, m  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize)
-
+	
 	@time	U = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 
 	end
