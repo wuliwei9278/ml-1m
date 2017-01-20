@@ -211,7 +211,7 @@ function solve_delta(g, m, U, X, r, d1, d2, lambda, rows, vals)
 	delta = zeros(size(g)[1])
 	rr = -g
 	p = -rr
-	err = norm(rr) * 10.0^-3
+	err = norm(rr) * 10.0^-2
 	for k in 1:10
 		#println(k)
 		#Hp = compute_Ha(p, m, U, X, r, d1, d2, lambda, rows, vals)
@@ -264,16 +264,16 @@ function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize)
 	# g,m = obtain_g(U, V, X, d1, d2, lambda, rows, vals)
 	m = comp_m(U, V, X, d1, d2, rows, vals);
  	g = obtain_g_new(U, V, X, d1, d2, lambda, rows, vals,m)
-	g = vec(g)
-	delta = solve_delta(g, m, U, X, r, d1, d2, lambda, rows, vals)
+	delta = solve_delta(vec(g), m, U, X, r, d1, d2, lambda, rows, vals)
 	delta = reshape(delta, size(V))
 	prev_obj = objective(m, U, V, X, d1, lambda, rows, vals)
 
+	Vold = V;
 	s = stepsize
 	for iter=1:20
-		V_new = V - s * delta
-		m_new = comp_m(U, V_new, X, d1, d2, rows, vals);
-		new_obj = objective(m_new, U, V_new, X, d1, lambda, rows, vals)
+		V = Vold - s * delta
+		m = comp_m(U, V, X, d1, d2, rows, vals);
+		new_obj = objective(m, U, V, X, d1, lambda, rows, vals)
 		println("Line Search iter ", iter, " Prev Obj ", prev_obj, " New Obj ", new_obj)
 		if (new_obj < prev_obj)
 			break
@@ -282,10 +282,14 @@ function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize)
 		end
 	end
 
-	V = 0
-	m = 0
+	VV = zeros(r,d2);
+	for ii=1:r
+		for jj = 1:d2
+			VV[ii,jj] = V[ii,jj]
+			end
+			end
 
-	return V_new, m_new
+	return VV, m
 end
 
 # Fix V, update U
@@ -364,7 +368,7 @@ function solve_delta_u(g, D, lambda, i, V, r, d2, vals, X, rows)
 	delta = zeros(size(g)[1])
 	rr = -g
 	p = -rr
-	err = norm(rr) * 10.0^-3
+	err = norm(rr) * 10.0^-2
 	for k in 1:10
 #Hp1 = obtain_Hs(p, A, D, V_bar, lambda)
 	Hp = obtain_Hs_new(i, V, X, r, d2, rows, vals, lambda, D, p);
@@ -464,7 +468,7 @@ function obtain_g_u_new(i, ui, V, X, r, d2, rows, vals, lambda, mm)
 	num = round(Int64, len*(len-1)/2)
 	D = zeros(num)
 
-	g = zeros(r,1)
+	g = zeros(r)
 	tmp_vals = zeros(len)
 
 	c = 0
@@ -516,7 +520,7 @@ function obtain_Hs_new(i, V, X, r, d2, rows, vals, lambda, D, s)
 	end
 
 
-	g = zeros(r,1)
+	g = zeros(r)
 	tmp_vals = zeros(len)
 
 	c = 0
@@ -556,6 +560,7 @@ function update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm)
 	delta = solve_delta_u(g, D, lambda, i, V, r, d2, vals, X, rows)
 
 
+	new_obj = 0
 	s = stepsize;
 	for inneriter=1:20
 		ui_new = ui - s * delta;
@@ -579,6 +584,7 @@ end
 
 function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 	total_obj_new = lambda/2*(vecnorm(V)^2)
+	obj_new = 0
 	for i in 1:d1
 		ui = U[:, i]
 		prev = 0
@@ -613,8 +619,8 @@ v = vec(X[:,3]);
 
 function main(x, y, v)
 	# userid; movieid
-	n = 6040; m = 3952;
-	X = sparse(x, y, v, n, m); # userid by movieid
+	n = 6040; msize = 3952;
+	X = sparse(x, y, v, n, msize); # userid by movieid
 	# julia column major 
 	# now moveid by userid
 	X = X'; 
@@ -632,13 +638,13 @@ function main(x, y, v)
 	U = 0.1*randn(r, d1);
 	V = 0.1*randn(r, d2);
 	stepsize = 1
-	for iter in 1:1
+	for iter in 1:20
 		println("Outer iteration: ", iter)
 
-	@time	V, m  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize)
+@time V, m  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize)
 	
-	@time	U = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
+@time U = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 
 	end
-	return V, U
+#	return V, U
 end
