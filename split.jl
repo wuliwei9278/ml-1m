@@ -1,6 +1,6 @@
 #split_train_test("MovieLens1m.csv", 0.9) 
-#convertRatingBinary("MovieLens1m_train")
-#convertRatingBinary("MovieLens1m_test")
+#convertRatingComps("MovieLens1m_train")
+
 
 # file name (assume text file seprated by comma and starting with 0, set sampling rate for training data set
 function split_train_test(f, rate) 
@@ -17,15 +17,29 @@ function split_train_test(f, rate)
 	end
 	close(ff)
 	ff = open(string(f,"_test"), "w");
-	v_test = v[g.>rate]; x_test = x[g.>rate]; y_test = y[g.>rate];
+	v_test = v[g.>rate]; x_test = x[g.>rate] + 1; y_test = y[g.>rate] + 1;
+	# Need to take into account empty lines for some userid
+	l = 0;
 	for i = 1:length(v_test)
-		println(ff, x_test[i] + 1, " ", y_test[i] + 1);
+		if i < length(v_test) && x_test[i] != x_test[i + 1]
+			print(ff, y_test[i], ":", v_test[i], " ");
+			for j in 1:(x_test[i + 1] - x_test[i])
+				l += 1;
+				println(ff);
+			end
+		else
+			print(ff, y_test[i], ":", v_test[i], " ");
+		end
+	end
+	for i = 1:(6040 - l)
+		l += 1;
+		println(ff);
 	end
 	close(ff)
 end 
 
 
-function convertRatingBinary(f)
+function convertRatingComps(f)
 	X = readdlm(f, ',' , Int64);
 	x = vec(X[:,1]) + 1; # userid starting from 0
 	y = vec(X[:,2]) + 1; # same for movieid
@@ -38,7 +52,7 @@ function convertRatingBinary(f)
 	rows = rowvals(X);
 	vals = nonzeros(X);
 	d2, d1 = size(X);
-	ff = open(string(f,"_Bin"), "w");
+	ff = open(string(f,"_comps"), "w");
 	for i = 1:d1
 		tmp = nzrange(X, i)
 		d2_bar = rows[tmp];

@@ -75,13 +75,13 @@ end
 function comp_m(U, V, X, d1, d2, rows, vals, cols)
 
 	mvals = zeros(nnz(X))
-	cc=0
-	for i=1:d1
+	cc = 0
+	for i = 1:d1
 		tmp = nzrange(X,i)
 		d2_bar = rows[tmp];
 		ui = U[:,i]
 		for j in d2_bar
-			cc+=1
+			cc += 1
 			mvals[cc] = dot(ui, V[:,j])
 		end
 	end
@@ -99,41 +99,6 @@ function comp_m(U, V, X, d1, d2, rows, vals, cols)
 #	return m
 end
 
-
-
-function obtain_g(U, V, X, d1, d2, lambda, rows, vals)
-	g = lambda * V;
-	m = spzeros(d2,d1);
-	for i = 1:d1
-		tmp = nzrange(X, i)
-		d2_bar = rows[tmp];
-		ui = U[:, i]
-		for j in d2_bar
-			m[j,i] = dot(ui,V[:,j])
-		end
-
-		vals_d2_bar = vals[tmp];
-		len = size(d2_bar)[1];
-		t = spzeros(1, len);
-		for j in 1:(len - 1)
-			J = d2_bar[j];
-			for k in (j + 1):len
-				K = d2_bar[k];
-				if vals_d2_bar[j] > vals_d2_bar[k]
-					t = helper(m, t, i, j, k, J, K)
-				elseif vals_d2_bar[k] > vals_d2_bar[j]
-					t = helper(m, t, i, k, j, K, J)
-				end
-			end
-		end
-		
-		for j in 1:len
-			J = d2_bar[j]
-			g[:,J] += ui * t[j]
-		end
-	end
-	return g, m
-end
 
 function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 	Ha = lambda * a
@@ -296,7 +261,6 @@ function objective(m, U, V, X, d1, lambda, rows, vals)
 end
 
 function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
-	# g,m = obtain_g(U, V, X, d1, d2, lambda, rows, vals)
 	m = comp_m(U, V, X, d1, d2, rows, vals, cols);
   	g = obtain_g_new(U, V, X, d1, d2, lambda, rows, vals,m)
 	delta = solve_delta(vec(g), m, U, X, r, d1, d2, lambda, rows, vals)
@@ -310,7 +274,7 @@ function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 		V = Vold - s * delta
 		m = comp_m(U, V, X, d1, d2, rows, vals, cols);
 		new_obj = objective(m, U, V, X, d1, lambda, rows, vals)
-		println("Line Search iter ", iter, " Prev Obj ", prev_obj, " New Obj ", new_obj)
+		#println("Line Search iter ", iter, " Prev Obj ", prev_obj, " New Obj ", new_obj)
 		if (new_obj < prev_obj)
 			break
 		else
@@ -379,26 +343,6 @@ function helper2(i, ui, V, X, r, d2, rows, vals)
 	return A, D, V_bar, m, c
 end
 
-
-function obtain_g_u(A, D, V_bar, ui, lambda)
-	tmp = A' * (V_bar' * ui) 
-	tmp -= ones(size(A)[2])
-	tmp = D * tmp
-	tmp = A * tmp
-	tmp = 2 * V_bar * tmp
-	tmp += lambda * ui
-	return tmp
-end
-
-function obtain_Hs(s, A, D, V_bar, lambda)
-	tmp = A' * (V_bar' * s)
-	tmp = D * tmp
-	tmp = A * tmp
-	tmp = 2 * V_bar * tmp
-	tmp += lambda * s
-	return tmp
-end
-
 function solve_delta_u(g, D, lambda, i, V, r, d2, vals, X, rows)
 	# use linear conjugate grad descent
 	delta = zeros(size(g)[1])
@@ -406,8 +350,7 @@ function solve_delta_u(g, D, lambda, i, V, r, d2, vals, X, rows)
 	p = -rr
 	err = norm(rr) * 10.0^-2
 	for k in 1:10
-#Hp1 = obtain_Hs(p, A, D, V_bar, lambda)
-	Hp = obtain_Hs_new(i, V, X, r, d2, rows, vals, lambda, D, p);
+		Hp = obtain_Hs_new(i, V, X, r, d2, rows, vals, lambda, D, p);
 		alpha = -dot(rr, p) / dot(p, Hp)
 		delta += alpha * p
 		rr += alpha * Hp
@@ -619,7 +562,8 @@ function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 
 	for i in 1:d1
 		ui = U[:, i]
-		prev = 0
+# The reason of adding of commented codes before is to consider the case there are no comparisions for a particular user.
+#		prev = 0
 		mm = nonzeros(m[:,i]);
 		for k in 1:1
 			ui, obj_new, mm = update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm);
@@ -634,7 +578,7 @@ function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 #				end
 #				prev = obj
 #			end	
-#println("prev value: ", prev)
+#		println("prev value: ", prev)
 		end	
 		total_obj_new += obj_new
 		U[:, i] = ui
@@ -658,19 +602,19 @@ function main(x, y, v)
 	X = X'; 
 
 	# too large to debug the algorithm, subset a small set: 500 by 750
-#X = X[1:500, 1:750];
-#X = X[1:1000, 1:2000];
+	#X = X[1:500, 1:750];
+	#X = X[1:1000, 1:2000];
 	rows = rowvals(X);
 	vals = nonzeros(X);
 	cols = zeros(Int, size(vals)[1]);
 
 	d2, d1 = size(X);
-	cc=0;
-	for i=1:d1
+	cc = 0;
+	for i = 1:d1
 		tmp = nzrange(X, i);
 		nowlen = size(tmp)[1];
-		for j=1:nowlen
-			cc+=1
+		for j = 1:nowlen
+			cc += 1
 			cols[cc] = i
 		end
 	end
@@ -691,7 +635,7 @@ function main(x, y, v)
 @time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	
 @time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
-		totaltime += toc();
+		totaltime += toq();
 		println("Iter ", iter, " Time ", totaltime, " obj ", nowobj)
 
 	end
