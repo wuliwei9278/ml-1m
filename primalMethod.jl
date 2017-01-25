@@ -587,9 +587,14 @@ function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 	return U, total_obj_new
 end
 
-X = readdlm("MovieLens1m.csv", ',' , Int64);
-x = vec(X[:,1]) + 1; # userid starting from 0
-y = vec(X[:,2]) + 1; # same for movieid
+#X = readdlm("MovieLens1m.csv", ',' , Int64);
+#x = vec(X[:,1]) + 1; # userid starting from 0
+#y = vec(X[:,2]) + 1; # same for movieid
+#v = vec(X[:,3]);
+
+X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
+x = vec(X[:,1]);
+y = vec(X[:,2]);
 v = vec(X[:,3]);
 #main(x, y, v);
 
@@ -635,9 +640,21 @@ function main(x, y, v)
 @time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	
 @time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
+
+	 	# need to add codes for computing pairwise error and NDCG
+	 	#pairwise_error = compute_pairwise_error(U, V)
+	 	#NDCG = computer_NDCG(U, V)
 		totaltime += toq();
 		println("Iter ", iter, " Time ", totaltime, " obj ", nowobj)
 
 	end
 #	return V, U
+end
+
+function computer_NDCG(U, V)
+	
+end
+
+function compute_pairwise_error(U, V)
+
 end
