@@ -596,15 +596,25 @@ X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
 x = vec(X[:,1]);
 y = vec(X[:,2]);
 v = vec(X[:,3]);
-#main(x, y, v);
+Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
+xx = vec(Y[:,1]);
+yy = vec(Y[:,2]);
+vv = vec(Y[:,3]);
 
-function main(x, y, v)
+#main(x, y, v);
+#main(x, y, v, xx, yy, vv)
+
+function main(x, y, v, xx, yy, vv)
 	# userid; movieid
-	n = 6040; msize = 3952;
+	# n = 6040; msize = 3952;
+	# depending on the size of X, read n_users and n_items from python output
+	n = 1496; msize = 3952; 
 	X = sparse(x, y, v, n, msize); # userid by movieid
+	Y = sparse(xx, yy, vv, n, msize);
 	# julia column major 
 	# now moveid by userid
 	X = X'; 
+	Y = Y';
 
 	# too large to debug the algorithm, subset a small set: 500 by 750
 	#X = X[1:500, 1:750];
@@ -624,6 +634,20 @@ function main(x, y, v)
 		end
 	end
 
+	rows_t = rowvals(Y);
+	vals_t = nonzeros(Y);
+	cols_t = zeros(Int, size(vals_t)[1]);
+	cc = 0;
+	for i = 1:d1
+		tmp = nzrange(Y, i);
+		nowlen = size(tmp)[1];
+		for j = 1:nowlen
+			cc += 1
+			cols_t[cc] = i
+		end
+	end
+
+
 	r = 100; 
 	lambda = 5000;
 	# initialize U, V
@@ -641,20 +665,57 @@ function main(x, y, v)
 	
 @time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 
-	 	# need to add codes for computing pairwise error and NDCG
-	 	#pairwise_error = compute_pairwise_error(U, V)
-	 	#NDCG = computer_NDCG(U, V)
+	 	
 		totaltime += toq();
-		println("Iter ", iter, " Time ", totaltime, " obj ", nowobj)
+
+		# need to add codes for computing pairwise error and NDCG
+	 	pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+	 	#NDCG = computer_NDCG(U, V)
+
+		println("Iter ", iter, " Time ", totaltime, " obj ", nowobj, " pairwise_error ", pairwise_error)
 
 	end
 #	return V, U
 end
 
-function computer_NDCG(U, V)
-	
+function compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+	sum_error = 0.
+	for i = 1:d1
+		tmp = nzrange(Y, i)
+		d2_bar = rows_t[tmp];
+		vals_d2_bar = vals_t[tmp];
+		ui = U[:, i]
+		len = size(d2_bar)[1]
+		score = zeros(len)
+		for j = 1:len
+			J = d2_bar[j];
+			vj = V[:, J]
+			score[j] = dot(ui,vj)
+		end
+		error_this = 0
+		n_comps_this = 0
+		for j in 1:(len - 1)
+			jval = vals_d2_bar[j]
+			for k in (j + 1):len
+				kval = vals_d2_bar[k]
+				#if jval == kval
+				#	continue
+				#end
+				if score[j] >= score[k] && jval < kval
+					error_this += 1
+				end
+				if score[j] <= score[k] && jval > kval
+					error_this += 1
+				end
+				n_comps_this += 1
+			end
+		end
+		sum_error += error_this / n_comps_this
+	end
+	return sum_error / d1
 end
 
-function compute_pairwise_error(U, V)
+function computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+
 
 end
