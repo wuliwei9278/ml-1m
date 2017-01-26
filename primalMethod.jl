@@ -650,6 +650,7 @@ function main(x, y, v, xx, yy, vv)
 
 	r = 100; 
 	lambda = 5000;
+	ndcg_k = 10;
 	# initialize U, V
 	srand(1234)
 	U = 0.1*randn(r, d1);
@@ -670,9 +671,8 @@ function main(x, y, v, xx, yy, vv)
 
 		# need to add codes for computing pairwise error and NDCG
 	 	pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
-	 	#NDCG = computer_NDCG(U, V)
-
-		println("Iter ", iter, " Time ", totaltime, " obj ", nowobj, " pairwise_error ", pairwise_error)
+	 	ndcg = computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+		println("Iter ", iter, " Time ", totaltime, " obj ", nowobj, " pairwise_error ", pairwise_error, " NDCG ", ndcg)
 
 	end
 #	return V, U
@@ -712,7 +712,35 @@ function compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 	return sum_error / d1
 end
 
-function computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
-
-
+function computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+	ndcg_sum = 0.
+	for i = 1:d1
+		tmp = nzrange(Y, i)
+		d2_bar = rows_t[tmp]
+		vals_d2_bar = vals_t[tmp]
+		ui = U[:, i]
+		len = size(d2_bar)[1]
+		score = zeros(len)
+		for j = 1:len
+			J = d2_bar[j];
+			vj = V[:, J]
+			score[j] = dot(ui,vj)
+		end
+		p1 = sortperm(score, rev = true)
+		p1 = p1[1:ndcg_k]
+		M1 = vals_d2_bar[p1]
+		p2 = sortperm(vals_d2_bar, rev = true)
+		p2 = p2[1:ndcg_k]
+		M2 = vals_d2_bar[p2]
+		dcg = 0.; dcg_max = 0.
+		for k = 1:ndcg_k
+			dcg += (2 ^ M1[k] - 1) / log2(k + 1)
+			dcg_max += (2 ^ M2[k] - 1) / log2(k + 1)
+		end
+		ndcg_sum += dcg / dcg_max
+	end
+	return ndcg_sum / d1
 end
+
+
+
