@@ -53,6 +53,8 @@ def num2comp(filename, output, n_train, n_test):
   g2 = open(output + '_train_ratings.csv', 'w')
 
   g3 = open(output + '_test_ratings.lsvm', 'w')  
+
+  g5 = open(output + '_test_ratings.csv', 'w')  
   for u in xrange(1, n_users+1):
     ratings_list = []
 
@@ -74,6 +76,8 @@ def num2comp(filename, output, n_train, n_test):
       write_comps(g1, user_id, train)
       for i in xrange(len(train)):
         print(str(user_id) + "," + str(train[i][0]) + "," + str(int(train[i][1])), file = g2)
+      for i in xrange(len(test)):
+        print(str(user_id) + "," + str(test[i][0]) + "," + str(int(test[i][1])), file = g5)
       write_lsvm(g4, user_id, train)
       write_lsvm(g3, user_id, test)
 
@@ -81,6 +85,7 @@ def num2comp(filename, output, n_train, n_test):
   g2.close()
   g3.close()
   g4.close()
+  g5.close()
   
   print("Comparisons generated for {0} users {1} items".format(user_id, n_items))
 
