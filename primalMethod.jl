@@ -698,9 +698,6 @@ function compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 			jval = vals_d2_bar[j]
 			for k in (j + 1):len
 				kval = vals_d2_bar[k]
-				#if jval == kval
-				#	continue
-				#end
 				if score[j] >= score[k] && jval < kval
 					error_this += 1
 				end
