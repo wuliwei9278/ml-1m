@@ -770,7 +770,7 @@ function main(x, y, v, xx, yy, vv)
 	lambda = 5000;
 	ndcg_k = 10;
 	# initialize U, V
-	#srand(1234)
+	srand(1234)
 	U = 0.1*randn(r, d1);
 	V = 0.1*randn(r, d2);
 	stepsize = 1
@@ -780,7 +780,7 @@ function main(x, y, v, xx, yy, vv)
 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	m = comp_m(U, V, X, d1, d2, rows, vals, cols)
 	nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
-	println(" ", 0, " ", totaltime, " ", nowobj, " ", pairwise_error, " ", ndcg, ";")
+	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "]")
 
 	for iter in 1:20
 		tic();
@@ -801,7 +801,7 @@ function main(x, y, v, xx, yy, vv)
 	 	#ndcg = computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 
 	 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-		println(" ", iter, " ", totaltime, " ", nowobj, " ", pairwise_error, " ", ndcg, ";")
+		println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "]")
 
 	end
 #	return V, U
