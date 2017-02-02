@@ -780,15 +780,15 @@ function main(x, y, v, xx, yy, vv)
 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	m = comp_m(U, V, X, d1, d2, rows, vals, cols)
 	nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
-	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "]")
+	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
 
 	for iter in 1:20
 		tic();
 #	println("Outer iteration: ", iter)
 
-#@time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
+@time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	
-#@time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
+@time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		
 		V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
@@ -801,7 +801,7 @@ function main(x, y, v, xx, yy, vv)
 	 	#ndcg = computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 
 	 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-		println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "]")
+		println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
 
 	end
 #	return V, U
