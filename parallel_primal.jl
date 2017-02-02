@@ -1,15 +1,4 @@
 # julia
-
-### Questions: 
-#
-#  1. compute_H_new(), should we have for loop: for j=1:len, for k=1:len ?  (you need to sum over all other elements for a j, see (7) in your writeup). 
-#
-#
-#
-####
-
-
-
 # Fix U, update V
 
 function helper(m, t, i, j, k, J, K)
@@ -26,8 +15,6 @@ end
 
 function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 	g = lambda * V;
-
-#	ff = open("pppp", "w");
 	for i = 1:d1
 		tmp = nzrange(X, i)
 		d2_bar = rows[tmp];
@@ -39,11 +26,8 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 
 		t = zeros(len);
 		for j in 1:(len - 1)
-#			J = d2_bar[j];
 			for k in (j + 1):len
-#				K = d2_bar[k];
 				if vals_d2_bar[j] > vals_d2_bar[k]
-#		println(ff, i, " ", J, " ", K);
 					mask = mm[j] - mm[k];
 					if mask < 1.0
 						s_jk = 2.0 * (mask - 1.0)
@@ -51,7 +35,6 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 						t[k] -= s_jk
 					end
 				elseif vals_d2_bar[k] > vals_d2_bar[j]
-#					println(ff, i, " ", K, " ", J);
 					mask = mm[k]-mm[j];
 					if mask < 1.0
 						s_jk = 2.0 * (mask - 1.0)
@@ -67,7 +50,6 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 			g[:,J] += ui * t[j]
 		end
 	end
-#	close(ff)
 	return g
 end
 
@@ -78,25 +60,14 @@ function comp_m(U, V, X, d1, d2, rows, vals, cols)
 	cc = 0
 	for i = 1:d1
 		tmp = nzrange(X,i)
-		d2_bar = rows[tmp];
+		d2_bar = rows[tmp]
 		ui = U[:,i]
 		for j in d2_bar
 			cc += 1
 			mvals[cc] = dot(ui, V[:,j])
 		end
 	end
-	return sparse(rows, cols, mvals, d2, d1);
-
-#	m = spzeros(d2,d1);
-#	for i = 1:d1
-#		tmp = nzrange(X, i)
-#		d2_bar = rows[tmp];
-#		ui = U[:, i]
-#		for j in d2_bar
-#			m[j,i] = dot(ui,V[:,j])
-#		end
-#	end
-#	return m
+	return sparse(rows, cols, mvals, d2, d1)
 end
 
 
@@ -113,7 +84,6 @@ function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 		cc=0
 		for q in d2_bar
 			cc+=1
-#			a_q = a[(q-1)*r+1:q*r]
 			b[cc] = dot(ui, a[(q-1)*r+1:q*r])
 		end
 
@@ -143,25 +113,6 @@ function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 			p = d2_bar[j]
 			Ha[(p - 1) * r + 1 : p * r] += cpvals[j]*ui
 		end
-
-#		for j in 1:len
-#			p = d2_bar[j];
-#			c_p = 0.0
-#			for k in 1:len
-#				if vals_d2_bar[j] == vals_d2_bar[k]
-#					continue
-#				elseif vals_d2_bar[j] > vals_d2_bar[k]
-#					y_ipq = 1.0
-#				elseif vals_d2_bar[k] > vals_d2_bar[j]
-#					y_ipq = -1.0
-#				end
-#				mask = y_ipq * (mm[j] - mm[k])
-#				if mask < 1.0
-#					c_p += 2.0 * (b[j] - b[k])
-#				end
-#			end
-#			Ha[(p - 1) * r + 1 : p * r] += c_p*ui
-#		end
 	end
 	return Ha
 end	
@@ -240,9 +191,7 @@ function objective(m, U, V, X, d1, lambda, rows, vals)
 		mm = nonzeros(m[:,i])
 
 		for j in 1:(len - 1)
-#			p = d2_bar[j];
 			for k in (j + 1):len
-#				q = d2_bar[k]
 				if vals_d2_bar[j] == vals_d2_bar[k]
 					continue
 				elseif vals_d2_bar[j] > vals_d2_bar[k]
@@ -282,19 +231,10 @@ function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 		end
 	end
 
-	VV = zeros(r,d2);
-	for ii=1:r
-		for jj = 1:d2
-			VV[ii,jj] = V[ii,jj]
-		end
-	end
-
-	return VV, m, new_obj
+	return V, m, new_obj
 end
 
 # Fix V, update U
-
-
 
 @everywhere function solve_delta_u(g, D, lambda, i, V, r, d2, vals, X, rows)
 	# use linear conjugate grad descent
@@ -485,31 +425,15 @@ end
 function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 	total_obj_new = lambda/2*(vecnorm(V)^2)
 	obj_new = 0
-
 	@sync @parallel for i in 1:d1
 		ui = U[:, i]
-# The reason of adding of commented codes before is to consider the case there are no comparisions for a particular user.
-#		prev = 0
 		mm = nonzeros(m[:,i]);
 		for k in 1:1
 			ui, obj_new, mm = update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm);
-#			if obj == -1.0
-#				break
-#			end
-#			if k == 1
-#				prev = obj
-#			else
-#				if abs(prev - obj) < 10.0 ^ -5 || (prev - obj) / prev < 10.0 ^ -1
-#					break
-#				end
-#				prev = obj
-#			end	
-#		println("prev value: ", prev)
 		end	
 		total_obj_new += obj_new
 		U[:, i] = ui
 	end
-#	println(" OBJNEW: ", total_obj_new)
 	return U, total_obj_new
 end
 
@@ -631,10 +555,7 @@ end
 
 
 
-#X = readdlm("MovieLens1m.csv", ',' , Int64);
-#x = vec(X[:,1]) + 1; # userid starting from 0
-#y = vec(X[:,2]) + 1; # same for movieid
-#v = vec(X[:,3]);
+
 
 X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
 x = vec(X[:,1]);
@@ -645,8 +566,8 @@ xx = vec(Y[:,1]);
 yy = vec(Y[:,2]);
 vv = vec(Y[:,3]);
 
-#main(x, y, v);
-#main(x, y, v, xx, yy, vv)
+# command to run julia program after include this file
+# main(x, y, v, xx, yy, vv)
 
 function main(x, y, v, xx, yy, vv)
 	# userid; movieid
@@ -712,7 +633,6 @@ function main(x, y, v, xx, yy, vv)
 
 	for iter in 1:20
 		tic();
-#	println("Outer iteration: ", iter)
 
 @time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	
@@ -725,8 +645,6 @@ function main(x, y, v, xx, yy, vv)
 
 		# need to add codes for computing pairwise error and NDCG
 
-	 	#pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
-	 	#ndcg = computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 		m = comp_m(U, V, X, d1, d2, rows, vals, cols)
 		nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
 	 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
