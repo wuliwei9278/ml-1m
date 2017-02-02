@@ -167,7 +167,45 @@ function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 end	
 
 
+function compute_Ha(a, m, U, X, r, d1, d2, lambda, rows, vals)
+	Ha = lambda * a
+	for i in 1:d1
+		tmp = nzrange(X, i)
+		d2_bar = rows[tmp]
+		b = spzeros(1,d2)
+		ui = U[:,i]
+		for q in d2_bar
+			a_q = a[(q-1)*r+1:q*r]
+			b[1,q] = dot(ui, a_q)
+		end
 
+		vals_d2_bar = vals[tmp]
+		len = size(d2_bar)[1]
+		for j in 1:(len - 1)
+			p = d2_bar[j];
+			c_p = 0.0
+			for k in (j + 1):len
+				q = d2_bar[k]
+				if vals_d2_bar[j] == vals_d2_bar[k]
+					continue
+				elseif vals_d2_bar[j] > vals_d2_bar[k]
+					y_ipq = 1.0
+				elseif vals_d2_bar[k] > vals_d2_bar[j]
+					y_ipq = -1.0
+				end
+				mask = y_ipq * (m[p, i] - m[q, i])
+				if mask >= 1.0
+					continue
+				else
+					s_pq = 2.0
+					c_p += s_pq * (b[1,p] - b[1,q])
+				end
+			end
+			Ha[(p - 1) * r + 1 : p * r] += ui * c_p
+		end
+	end
+	return Ha
+end	
 
 function solve_delta(g, m, U, X, r, d1, d2, lambda, rows, vals)
 	# use linear conjugate grad descent
@@ -257,53 +295,6 @@ end
 # Fix V, update U
 
 
-function helper2(i, ui, V, X, r, d2, rows, vals)
-	tmp = nzrange(X, i)
-	d2_bar = rows[tmp];
-	m = spzeros(1, d2)
-	# need to get new m for updated V
-	for j in d2_bar
-		m[1,j] = dot(ui,V[:,j])
-	end
-
-	vals_d2_bar = vals[tmp];
-	len = size(d2_bar)[1];
-	num = round(Int64, len*(len-1)/2)
-	D = zeros(num)
-	A = spzeros(len, num)
-	V_bar = zeros(r, len)
-	c = 0
-	
-	for j in 1:len
-		p = d2_bar[j];
-		V_bar[:,j] = V[:,p]
-		for k in (j + 1):len
-			q = d2_bar[k]
-			if vals_d2_bar[j] == vals_d2_bar[k]
-				continue
-			elseif vals_d2_bar[j] > vals_d2_bar[k]
-				y_ipq = 1.0
-				c += 1
-				A[j, c] = 1.0; A[k, c] = -1.0
-			elseif vals_d2_bar[k] > vals_d2_bar[j]
-				y_ipq = -1.0
-				c += 1
-				A[j, c] = -1.0; A[k, c] = 1.0
-			end
-			mask = y_ipq * (m[1, p] - m[1, q])
-			#println(mask)
-			if mask >= 1.0
-				continue
-			else
-				D[c] = 1.0
-			end
-		end
-	end
-
-	D = D[1:c]; A = A[:,1:c]
-	D = spdiagm(D)
-	return A, D, V_bar, m, c
-end
 
 @everywhere function solve_delta_u(g, D, lambda, i, V, r, d2, vals, X, rows)
 	# use linear conjugate grad descent
@@ -365,7 +356,6 @@ end
 	end
 	return res
 end
-
 
 
 
@@ -520,8 +510,9 @@ function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		U[:, i] = ui
 	end
 #	println(" OBJNEW: ", total_obj_new)
-	return U
+	return U, total_obj_new
 end
+
 
 
 function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
@@ -573,6 +564,69 @@ function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t,
 end
 
 
+function compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+	sum_error = 0.
+	for i = 1:d1
+		tmp = nzrange(Y, i)
+		d2_bar = rows_t[tmp];
+		vals_d2_bar = vals_t[tmp];
+		ui = U[:, i]
+		len = size(d2_bar)[1]
+		score = zeros(len)
+		for j = 1:len
+			J = d2_bar[j];
+			vj = V[:, J]
+			score[j] = dot(ui,vj)
+		end
+		error_this = 0
+		n_comps_this = 0
+		for j in 1:(len - 1)
+			jval = vals_d2_bar[j]
+			for k in (j + 1):len
+				kval = vals_d2_bar[k]
+				if score[j] >= score[k] && jval < kval
+					error_this += 1
+				end
+				if score[j] <= score[k] && jval > kval
+					error_this += 1
+				end
+				n_comps_this += 1
+			end
+		end
+		sum_error += error_this / n_comps_this
+	end
+	return sum_error / d1
+end
+
+function computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+	ndcg_sum = 0.
+	for i = 1:d1
+		tmp = nzrange(Y, i)
+		d2_bar = rows_t[tmp]
+		vals_d2_bar = vals_t[tmp]
+		ui = U[:, i]
+		len = size(d2_bar)[1]
+		score = zeros(len)
+		for j = 1:len
+			J = d2_bar[j];
+			vj = V[:, J]
+			score[j] = dot(ui,vj)
+		end
+		p1 = sortperm(score, rev = true)
+		p1 = p1[1:ndcg_k]
+		M1 = vals_d2_bar[p1]
+		p2 = sortperm(vals_d2_bar, rev = true)
+		p2 = p2[1:ndcg_k]
+		M2 = vals_d2_bar[p2]
+		dcg = 0.; dcg_max = 0.
+		for k = 1:ndcg_k
+			dcg += (2 ^ M1[k] - 1) / log2(k + 1)
+			dcg_max += (2 ^ M2[k] - 1) / log2(k + 1)
+		end
+		ndcg_sum += dcg / dcg_max
+	end
+	return ndcg_sum / d1
+end
 
 
 
@@ -643,8 +697,10 @@ function main(x, y, v, xx, yy, vv)
 	ndcg_k = 10;
 	# initialize U, V
 	srand(1234)
-	U = convert(SharedArray,0.1*randn(r,d1));
-	V = convert(SharedArray,0.1*randn(r,d2));
+	U = 0.1*randn(r, d1); 
+	V = 0.1*randn(r, d2);
+	U = convert(SharedArray, U)
+	V = convert(SharedArray, V)
 	stepsize = 1
 
 	totaltime = 0.00000;
@@ -657,14 +713,13 @@ function main(x, y, v, xx, yy, vv)
 	for iter in 1:20
 		tic();
 #	println("Outer iteration: ", iter)
+
 @time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
-@time U = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m) # nowobj here is wrong due to parallel 
-
 	
-
+@time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		
-#		V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
-#		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
+		V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
+		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 	 	
 		totaltime += toq();
 
@@ -672,7 +727,7 @@ function main(x, y, v, xx, yy, vv)
 
 	 	#pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 	 	#ndcg = computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-	 	m = comp_m(U, V, X, d1, d2, rows, vals, cols)
+		m = comp_m(U, V, X, d1, d2, rows, vals, cols)
 		nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
 	 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 		println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
