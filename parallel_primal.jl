@@ -13,6 +13,22 @@ function helper(m, t, i, j, k, J, K)
 	return t
 end
 
+function comp_m(U, V, X, d1, d2, rows, vals, cols)
+
+	mvals = zeros(nnz(X))
+	cc = 0
+	for i = 1:d1
+		tmp = nzrange(X,i)
+		d2_bar = rows[tmp]
+		ui = U[:,i]
+		for j in d2_bar
+			cc += 1
+			mvals[cc] = dot(ui, V[:,j])
+		end
+	end
+	return sparse(rows, cols, mvals, d2, d1)
+end
+
 function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 	g = lambda * V;
 	for i = 1:d1
@@ -52,24 +68,6 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 	end
 	return g
 end
-
-
-function comp_m(U, V, X, d1, d2, rows, vals, cols)
-
-	mvals = zeros(nnz(X))
-	cc = 0
-	for i = 1:d1
-		tmp = nzrange(X,i)
-		d2_bar = rows[tmp]
-		ui = U[:,i]
-		for j in d2_bar
-			cc += 1
-			mvals[cc] = dot(ui, V[:,j])
-		end
-	end
-	return sparse(rows, cols, mvals, d2, d1)
-end
-
 
 function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 	Ha = lambda * a
@@ -117,46 +115,6 @@ function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 	return Ha
 end	
 
-
-function compute_Ha(a, m, U, X, r, d1, d2, lambda, rows, vals)
-	Ha = lambda * a
-	for i in 1:d1
-		tmp = nzrange(X, i)
-		d2_bar = rows[tmp]
-		b = spzeros(1,d2)
-		ui = U[:,i]
-		for q in d2_bar
-			a_q = a[(q-1)*r+1:q*r]
-			b[1,q] = dot(ui, a_q)
-		end
-
-		vals_d2_bar = vals[tmp]
-		len = size(d2_bar)[1]
-		for j in 1:(len - 1)
-			p = d2_bar[j];
-			c_p = 0.0
-			for k in (j + 1):len
-				q = d2_bar[k]
-				if vals_d2_bar[j] == vals_d2_bar[k]
-					continue
-				elseif vals_d2_bar[j] > vals_d2_bar[k]
-					y_ipq = 1.0
-				elseif vals_d2_bar[k] > vals_d2_bar[j]
-					y_ipq = -1.0
-				end
-				mask = y_ipq * (m[p, i] - m[q, i])
-				if mask >= 1.0
-					continue
-				else
-					s_pq = 2.0
-					c_p += s_pq * (b[1,p] - b[1,q])
-				end
-			end
-			Ha[(p - 1) * r + 1 : p * r] += ui * c_p
-		end
-	end
-	return Ha
-end	
 
 function solve_delta(g, m, U, X, r, d1, d2, lambda, rows, vals)
 	# use linear conjugate grad descent
@@ -423,18 +381,19 @@ end
 
 
 function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
-	total_obj_new = lambda/2*(vecnorm(V)^2)
-	obj_new = 0
-	@sync @parallel for i in 1:d1
+	obj_new = 0.
+	obj_new = @parallel (+) for i in 1:d1
 		ui = U[:, i]
 		mm = nonzeros(m[:,i]);
 		for k in 1:1
 			ui, obj_new, mm = update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm);
 		end	
-		total_obj_new += obj_new
+		#total_obj_new += obj_new
 		U[:, i] = ui
+		obj_new
 	end
-	return U, total_obj_new
+	obj_new += lambda/2*(vecnorm(V)^2)
+	return U, obj_new
 end
 
 
@@ -635,6 +594,7 @@ function main(x, y, v, xx, yy, vv)
 		tic();
 
 @time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
+	println(nowobj)
 	
 @time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		
@@ -645,8 +605,8 @@ function main(x, y, v, xx, yy, vv)
 
 		# need to add codes for computing pairwise error and NDCG
 
-		m = comp_m(U, V, X, d1, d2, rows, vals, cols)
-		nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
+		#m = comp_m(U, V, X, d1, d2, rows, vals, cols)
+		#nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
 	 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 		println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
 
