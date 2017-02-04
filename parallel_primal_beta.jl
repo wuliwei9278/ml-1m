@@ -29,10 +29,31 @@ function comp_m(U, V, X, d1, d2, rows, vals, cols)
 	return sparse(rows, cols, mvals, d2, d1)
 end
 
-function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
-	g = lambda * V;
-	for i = 1:d1
-		tmp = nzrange(X, i)
+@everywhere function myrange(d1)
+    idx = myid()
+    if idx == 1
+        # This worker is not assigned a piece
+        return 1:0
+    end
+    nchunks = nprocs() - 1
+    splits = [round(Int, s) for s in linspace(0, d1, nchunks + 1)]
+    return splits[idx - 1] + 1:splits[idx]
+end
+
+@everywhere function copy!(g, a)
+	for j in 1:size(a)[2]
+		for i in 1:size(a)[1]
+			g[i,j] += a[i,j]
+		end
+	end
+end
+
+@everywhere function chunk_g!(g, U, V, X, d1, d2, lambda, rows, vals, m, irange)
+	# display so we can see what's happening
+    #@show (irange)  
+    a = zeros(size(V))
+    for i in irange
+        tmp = nzrange(X, i)
 		d2_bar = rows[tmp];
 		vals_d2_bar = vals[tmp];
 		len = size(d2_bar)[1];
@@ -63,16 +84,38 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 		
 		for j in 1:len
 			J = d2_bar[j]
-			g[:,J] += ui * t[j]
+			a[:,J] += ui * t[j]
 		end
-	end
-	return g
+    end
+    copy!(g, a)
+    return g
 end
 
-function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
-	Ha = lambda * a
-	for i in 1:d1
-		tmp = nzrange(X, i)
+@everywhere shared_chunk_g!(g, U, V, X, d1, d2, lambda, rows, vals, m) = chunk_g!(g, U, V, X, d1, d2, lambda, rows, vals, m, myrange(d1))
+
+
+function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
+	g = SharedArray(Float64, size(V))
+    @sync begin
+        for p in 1:nprocs()
+            @async remotecall_wait(p, shared_chunk_g!, g, U, V, X, d1, d2, lambda, rows, vals, m)
+        end
+    end
+    g + lambda * V
+end
+
+@everywhere function copy2!(Ha, d)
+	for i in 1:size(d)[1]
+		Ha[i] += d[i]
+	end
+end
+
+@everywhere function chunk_Ha!(Ha, a, m, U, X, r, d1, d2, lambda, rows, vals, irange)
+	# display so we can see what's happening
+    #@show (irange)  
+    d = zeros(size(a))
+    for i in irange
+        tmp = nzrange(X, i)
 		d2_bar = rows[tmp]
 		vals_d2_bar = vals[tmp]
 		len = size(d2_bar)[1]
@@ -109,11 +152,24 @@ function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 		end
 		for j in 1:len
 			p = d2_bar[j]
-			Ha[(p - 1) * r + 1 : p * r] += cpvals[j]*ui
+			d[(p - 1) * r + 1 : p * r] += cpvals[j]*ui
 		end
-	end
-	return Ha
-end	
+    end
+    copy2!(Ha, d)
+    return Ha
+end
+
+@everywhere shared_chunk_Ha!(Ha, a, m, U, X, r, d1, d2, lambda, rows, vals) = chunk_Ha!(Ha, a, m, U, X, r, d1, d2, lambda, rows, vals, myrange(d1))
+
+function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
+	Ha = SharedArray(Float64, size(a))
+    @sync begin
+        for p in 1:nprocs()
+            @async remotecall_wait(p, shared_chunk_Ha!, Ha, a, m, U, X, r, d1, d2, lambda, rows, vals)
+        end
+    end
+    Ha + lambda * a
+end
 
 
 function solve_delta(g, m, U, X, r, d1, d2, lambda, rows, vals)
@@ -239,9 +295,7 @@ end
 	vals_d2_bar = vals[tmp];
 	len = size(d2_bar)[1];
 	for j in 1:(len - 1)
-#		p = d2_bar[j];
 		for k in (j + 1):len
-#			q = d2_bar[k]
 			if vals_d2_bar[j] == vals_d2_bar[k]
 				continue
 			elseif vals_d2_bar[j] > vals_d2_bar[k]
@@ -391,7 +445,6 @@ function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		for k in 1:1
 			ui, obj_new, mm = update_u(i, ui, V, X, r, d2, lambda, rows, vals, stepsize, mm);
 		end	
-		#total_obj_new += obj_new
 		U[:, i] = ui
 		obj_new
 	end
@@ -596,10 +649,9 @@ function main(x, y, v, xx, yy, vv)
 	for iter in 1:20
 		tic();
 
-@time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
-
+ 		V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	
-@time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
+ 		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		
 
 		totaltime += toq();
