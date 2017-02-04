@@ -786,13 +786,10 @@ function main(x, y, v, xx, yy, vv)
 		tic();
 #	println("Outer iteration: ", iter)
 
-@time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
-	
-@time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
-		
 		V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
+	
 		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
-	 	
+	
 		totaltime += toq();
 
 		# need to add codes for computing pairwise error and NDCG
