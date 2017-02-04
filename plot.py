@@ -98,51 +98,37 @@ plt.show()
 # four cores
 julia> main(x, y, v, xx, yy, vv)
 iter time objective_function pairwise_error NDCG
-[0, 0.0, 3.492397234470954e7, 0.3510205089577718, 0.4753335862187586],
-  1.678660 seconds (10.24 M allocations: 4.518 GB, 12.16% gc time)
-  0.499530 seconds (11.39 k allocations: 961.703 KB)
-[1, 5.616720384, 1.791993708318427e7, 0.1927016951718535, 0.7781138146180607],
-  2.982273 seconds (16.28 M allocations: 8.691 GB, 10.66% gc time)
-  0.917599 seconds (11.39 k allocations: 961.703 KB)
-[2, 13.724786791, 1.7663148705284577e7, 0.18201973339141664, 0.796294944993741],
-  3.274904 seconds (17.80 M allocations: 9.734 GB, 10.48% gc time)
-  0.699746 seconds (11.40 k allocations: 978.344 KB)
-[3, 21.600646521999998, 1.7644575966866747e7, 0.18045180573422978, 0.7994476981028341],
-  2.958819 seconds (16.28 M allocations: 8.691 GB, 10.47% gc time)
-  0.656847 seconds (11.39 k allocations: 961.703 KB)
-[4, 28.720281531999998, 1.7640725446861226e7, 0.1801828890743176, 0.7995226071699875],
-  2.625300 seconds (14.77 M allocations: 7.647 GB, 10.36% gc time)
-  0.683220 seconds (11.39 k allocations: 977.781 KB)
-[5, 35.103232981, 1.763939456767286e7, 0.18006125722267952, 0.7995192587547784],
-  2.634530 seconds (14.77 M allocations: 7.647 GB, 10.38% gc time)
-  0.609187 seconds (11.40 k allocations: 962.266 KB)
-[6, 41.305171267, 1.7638800772988353e7, 0.1800488808296141, 0.7993365503582156],
-  2.318446 seconds (13.25 M allocations: 6.604 GB, 10.48% gc time)
-  0.605013 seconds (11.39 k allocations: 961.703 KB)
-
-
+[0, 0.0, 3.492397234471353e7, 0.3510205089577718, 0.4753335862187586],
+  1.814908 seconds (9.10 M allocations: 4.479 GB, 12.14% gc time)
+  0.511884 seconds (14.16 k allocations: 1.242 MB)
+[1, 2.327165961, 2.0650186482471563e7, 0.23643604844121305, 0.733801658808334],
+  2.692938 seconds (13.64 M allocations: 7.609 GB, 11.16% gc time)
+  0.647702 seconds (14.17 k allocations: 1.211 MB)
+[2, 5.6681036549999995, 1.7919937083181817e7, 0.1927016951718535, 0.7781138146180607],
+  3.144078 seconds (15.16 M allocations: 8.653 GB, 10.79% gc time)
+  0.710155 seconds (14.16 k allocations: 1.210 MB)
+[3, 9.522690096, 1.770736560111908e7, 0.18474258794462156, 0.7910377289550884],
+  3.422381 seconds (16.67 M allocations: 9.696 GB, 10.70% gc time)
+  0.717867 seconds (14.18 k allocations: 1.242 MB)
+[4, 13.663247073, 1.766314870528199e7, 0.18201973339141664, 0.796294944993741],
+  3.491964 seconds (16.67 M allocations: 9.696 GB, 11.34% gc time)
+  0.746679 seconds (14.15 k allocations: 1.226 MB)
 
 # one core
-  julia> main(x, y, v, xx, yy, vv)
+julia> main(x, y, v, xx, yy, vv)
 iter time objective_function pairwise_error NDCG
 [0, 0.0, 3.4923972344709754e7, 0.3510205089577718, 0.4753335862187586],
-  1.658891 seconds (10.22 M allocations: 4.517 GB, 10.89% gc time)
-  1.288036 seconds (9.51 M allocations: 3.386 GB, 12.01% gc time)
-[1, 7.214805126, 1.7919937083181847e7, 0.1927016951718535, 0.7781138146180607],
-  2.996044 seconds (16.28 M allocations: 8.691 GB, 11.20% gc time)
-  1.871123 seconds (14.39 M allocations: 5.007 GB, 10.21% gc time)
-[2, 17.261449234, 1.7663148705281977e7, 0.18201973339141664, 0.796294944993741],
-  3.303623 seconds (17.80 M allocations: 9.734 GB, 11.21% gc time)
-  1.812775 seconds (14.38 M allocations: 5.004 GB, 10.29% gc time)
-[3, 27.128495549, 1.7644575966865093e7, 0.18045180573422978, 0.7994476981028341],
-  2.952243 seconds (16.28 M allocations: 8.691 GB, 10.87% gc time)
-  1.734848 seconds (13.31 M allocations: 4.648 GB, 10.01% gc time)
-[4, 36.183659024, 1.764072544686018e7, 0.1801828890743176, 0.7995226071699875],
-  2.638789 seconds (14.77 M allocations: 7.647 GB, 10.75% gc time)
-  1.676698 seconds (12.74 M allocations: 4.459 GB, 10.19% gc time)
-[5, 44.441139823, 1.7639394567674518e7, 0.18006125722267952, 0.7995192587547784],
-  2.646855 seconds (14.77 M allocations: 7.647 GB, 10.84% gc time)
-  1.665434 seconds (12.45 M allocations: 4.363 GB, 10.35% gc time)
-[6, 52.718880462, 1.7638800772987466e7, 0.1800488808296141, 0.7993365503582156],
-  2.299481 seconds (13.25 M allocations: 6.604 GB, 10.47% gc time)
-  1.655629 seconds (12.29 M allocations: 4.308 GB, 10.23% gc time)
+  1.896173 seconds (10.22 M allocations: 4.517 GB, 10.04% gc time)
+  1.385487 seconds (9.51 M allocations: 3.386 GB, 8.88% gc time)
+[1, 3.281971447, 2.065018648247157e7, 0.23643604844121305, 0.733801658808334],
+  2.958007 seconds (14.77 M allocations: 7.647 GB, 9.67% gc time)
+  1.803388 seconds (12.63 M allocations: 4.423 GB, 9.48% gc time)
+[2, 8.043663496, 1.7919937083181847e7, 0.1927016951718535, 0.7781138146180607],
+  3.413812 seconds (16.28 M allocations: 8.691 GB, 9.57% gc time)
+  2.009084 seconds (14.39 M allocations: 5.007 GB, 8.83% gc time)
+[3, 13.466827185, 1.7707365601119094e7, 0.18474258794462156, 0.7910377289550884],
+  3.719686 seconds (17.80 M allocations: 9.734 GB, 9.04% gc time)
+  2.069769 seconds (14.77 M allocations: 5.134 GB, 9.28% gc time)
+[4, 19.256547844, 1.7663148705281977e7, 0.18201973339141664, 0.796294944993741],
+  3.745156 seconds (17.80 M allocations: 9.734 GB, 9.58% gc time)
+  2.024997 seconds (14.38 M allocations: 5.004 GB, 9.47% gc time)
