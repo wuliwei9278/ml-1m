@@ -40,7 +40,7 @@ end
     return splits[idx - 1] + 1:splits[idx]
 end
 
-@everywhere function copy!(g, a)
+@everywhere function copy(g, a)
 	for j in 1:size(a)[2]
 		for i in 1:size(a)[1]
 			g[i,j] += a[i,j]
@@ -87,7 +87,7 @@ end
 			a[:,J] += ui * t[j]
 		end
     end
-    copy!(g, a)
+    copy(g, a)
     return g
 end
 
@@ -98,13 +98,13 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
 	g = SharedArray(Float64, size(V))
     @sync begin
         for p in 1:nprocs()
-            @async remotecall_wait(p, shared_chunk_g!, g, U, V, X, d1, d2, lambda, rows, vals, m)
+            @async remotecall_wait(shared_chunk_g!, p, g, U, V, X, d1, d2, lambda, rows, vals, m)
         end
     end
     g + lambda * V
 end
 
-@everywhere function copy2!(Ha, d)
+@everywhere function copy2(Ha, d)
 	for i in 1:size(d)[1]
 		Ha[i] += d[i]
 	end
@@ -155,7 +155,7 @@ end
 			d[(p - 1) * r + 1 : p * r] += cpvals[j]*ui
 		end
     end
-    copy2!(Ha, d)
+    copy2(Ha, d)
     return Ha
 end
 
@@ -165,7 +165,7 @@ function compute_Ha_new(a, m, U, X, r, d1, d2, lambda, rows, vals)
 	Ha = SharedArray(Float64, size(a))
     @sync begin
         for p in 1:nprocs()
-            @async remotecall_wait(p, shared_chunk_Ha!, Ha, a, m, U, X, r, d1, d2, lambda, rows, vals)
+            @async remotecall_wait(shared_chunk_Ha!, p, Ha, a, m, U, X, r, d1, d2, lambda, rows, vals)
         end
     end
     Ha + lambda * a
@@ -454,10 +454,12 @@ end
 
 
 
-function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-	sum_error = 0.; ndcg_sum = 0.;
-	for i = 1:d1
-		tmp = nzrange(Y, i)
+@everywhere function chunk_ndcg!(res, U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k, irange)
+	# display so we can see what's happening
+    #@show (irange)  
+    a = zeros(2)
+    for i in irange
+        tmp = nzrange(Y, i)
 		d2_bar = rows_t[tmp];
 		vals_d2_bar = vals_t[tmp];
 		ui = U[:, i]
@@ -483,7 +485,7 @@ function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t,
 				n_comps_this += 1
 			end
 		end
-		sum_error += error_this / n_comps_this
+		a[1] += error_this / n_comps_this
 
 
 		p1 = sortperm(score, rev = true)
@@ -497,15 +499,30 @@ function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t,
 			dcg += (2 ^ M1[k] - 1) / log2(k + 1)
 			dcg_max += (2 ^ M2[k] - 1) / log2(k + 1)
 		end
-		ndcg_sum += dcg / dcg_max
-	end
-	return sum_error / d1, ndcg_sum / d1
+		a[2] += dcg / dcg_max
+    end
+    copy2(res, a)
+    return res
 end
+
+@everywhere shared_chunk_ndcg!(res, U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k) = chunk_ndcg!(res, U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k, myrange(d1))
+
+function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+	res = SharedArray(Float64, 2)
+    @sync begin
+        for p in 1:nprocs()
+            @async remotecall_wait(shared_chunk_ndcg!, p, res, U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+        end
+    end
+    return res[1] / d1, res[2] / d1 
+end
+
+
 
 
 function compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 	sum_error = 0.
-	for i = 1:d1
+	sum_error = @parallel (+) for i = 1:d1
 		tmp = nzrange(Y, i)
 		d2_bar = rows_t[tmp];
 		vals_d2_bar = vals_t[tmp];
@@ -532,14 +549,15 @@ function compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 				n_comps_this += 1
 			end
 		end
-		sum_error += error_this / n_comps_this
+		#sum_error += error_this / n_comps_this
+		error_this / n_comps_this
 	end
 	return sum_error / d1
 end
 
-function computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+function compute_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	ndcg_sum = 0.
-	for i = 1:d1
+	ndcg_sum = @parallel (+) for i = 1:d1
 		tmp = nzrange(Y, i)
 		d2_bar = rows_t[tmp]
 		vals_d2_bar = vals_t[tmp]
@@ -562,7 +580,8 @@ function computer_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 			dcg += (2 ^ M1[k] - 1) / log2(k + 1)
 			dcg_max += (2 ^ M2[k] - 1) / log2(k + 1)
 		end
-		ndcg_sum += dcg / dcg_max
+		#ndcg_sum += dcg / dcg_max
+		dcg / dcg_max
 	end
 	return ndcg_sum / d1
 end
@@ -572,11 +591,15 @@ end
 
 
 
-X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
+#X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
+#X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
+X = readdlm("netflix_train_ratings.csv", ',', Int64);
 x = vec(X[:,1]);
 y = vec(X[:,2]);
 v = vec(X[:,3]);
-Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
+#Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
+#Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
+Y = readdlm("netflix_test_ratings.csv", ',', Int64);
 xx = vec(Y[:,1]);
 yy = vec(Y[:,2]);
 vv = vec(Y[:,3]);
@@ -588,13 +611,15 @@ function main(x, y, v, xx, yy, vv)
 	# userid; movieid
 	# n = 6040; msize = 3952;
 	# depending on the size of X, read n_users and n_items from python output
-	n = 1496; msize = 3952; 
+	#n = 1496; msize = 3952; 
+	#n = 12851; msize = 65134
+    n = 221004; msize = 17771
 	X = sparse(x, y, v, n, msize); # userid by movieid
 	Y = sparse(xx, yy, vv, n, msize);
 	# julia column major 
 	# now moveid by userid
 	X = X'; 
-	Y = Y';
+	Y = Y'; 
 
 	# too large to debug the algorithm, subset a small set: 500 by 750
 	#X = X[1:500, 1:750];
@@ -633,15 +658,19 @@ function main(x, y, v, xx, yy, vv)
 	ndcg_k = 10;
 	# initialize U, V
 	srand(1234)
-	U = 0.1*randn(r, d1); 
-	V = 0.1*randn(r, d2);
+	U = 0.01*randn(r, d1); 
+	V = 0.01*randn(r, d2);
 	U = convert(SharedArray, U)
 	V = convert(SharedArray, V)
 	stepsize = 1
 
 	totaltime = 0.00000;
 	println("iter time objective_function pairwise_error NDCG")
+	
 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+	#pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+	#ndcg = compute_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+
 	m = comp_m(U, V, X, d1, d2, rows, vals, cols)
 	nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
 	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
@@ -658,8 +687,8 @@ function main(x, y, v, xx, yy, vv)
 
 		# need to add codes for computing pairwise error and NDCG
 
-		#m = comp_m(U, V, X, d1, d2, rows, vals, cols)
-		#nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
+		#pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+		#ndcg = compute_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 		println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
 
