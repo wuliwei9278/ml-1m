@@ -43,7 +43,7 @@ end
     return splits[idx - 1] + 1:splits[idx]
 end
 
-@everywhere function copy(g, a)
+@everywhere function update(g, a)
 	for j in 1:size(a)[2]
 		for i in 1:size(a)[1]
 			g[i,j] += a[i,j]
@@ -90,7 +90,7 @@ end
 			a[:,J] += ui * t[j]
 		end
     end
-    copy(g, a)
+    update(g, a)
     return g
 end
 
@@ -107,7 +107,7 @@ function obtain_g_new(U, V, X, d1, d2, lambda, rows, vals, m)
     g + lambda * V
 end
 
-@everywhere function copy2(Ha, d)
+@everywhere function update2(Ha, d)
 	for i in 1:size(d)[1]
 		Ha[i] += d[i]
 	end
@@ -158,7 +158,7 @@ end
 			d[(p - 1) * r + 1 : p * r] += cpvals[j]*ui
 		end
     end
-    copy2(Ha, d)
+    update2(Ha, d)
     return Ha
 end
 
@@ -504,7 +504,7 @@ end
 		end
 		a[2] += dcg / dcg_max
     end
-    copy2(res, a)
+    update2(res, a)
     return res
 end
 
@@ -595,14 +595,14 @@ end
 
 
 #X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
-#X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
-X = readdlm("netflix_train_ratings.csv", ',', Int64);
+X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
+#X = readdlm("netflix_train_ratings.csv", ',', Int64);
 x = vec(X[:,1]);
 y = vec(X[:,2]);
 v = vec(X[:,3]);
 #Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
-#Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
-Y = readdlm("netflix_test_ratings.csv", ',', Int64);
+Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
+#Y = readdlm("netflix_test_ratings.csv", ',', Int64);
 xx = vec(Y[:,1]);
 yy = vec(Y[:,2]);
 vv = vec(Y[:,3]);
@@ -615,8 +615,8 @@ function main(x, y, v, xx, yy, vv)
 	# n = 6040; msize = 3952;
 	# depending on the size of X, read n_users and n_items from python output
 	#n = 1496; msize = 3952; 
-	#n = 12851; msize = 65134
-    n = 221004; msize = 17771
+	n = 12851; msize = 65134
+    #n = 221004; msize = 17771
 	X = sparse(x, y, v, n, msize); # userid by movieid
 	Y = sparse(xx, yy, vv, n, msize);
 	# julia column major 
@@ -657,12 +657,14 @@ function main(x, y, v, xx, yy, vv)
 
 
 	r = 100; 
-	lambda = 5000;
+	lambda = 5000; 
+	# lambda = 7000 # works better for movielens10m data
+	#lambda = 10000; # works better for netflix data
 	ndcg_k = 10;
 	# initialize U, V
 	srand(1234)
-	U = 0.1*randn(r, d1); 
-	V = 0.1*randn(r, d2);
+	U = 0.1*randn(r, d1); V = 0.1*randn(r, d2);
+	# U = 0.01*randn(r, d1); V = 0.01*randn(r, d2); # works better for netflix data
 	U = convert(SharedArray, U)
 	V = convert(SharedArray, V)
 	stepsize = 1
