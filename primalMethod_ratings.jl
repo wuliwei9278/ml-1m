@@ -1463,12 +1463,14 @@ function main(x, y, v, xx, yy, vv)
 	end
 
 	r = 100; 
-	lambda = 5000;
-#	lambda = 100000;
+	#lambda = 5000;
+	lambda = 7000;
+	#lambda = 10000; # works better for netflix data
 	ndcg_k = 10;
 	# initialize U, V
 	srand(1234)
 	U = 0.1*randn(r, d1);	V = 0.1*randn(r, d2);
+	# U = 0.01*randn(r, d1); V = 0.01*randn(r, d2); # works better for netflix data
 	stepsize = 1
 
 	
