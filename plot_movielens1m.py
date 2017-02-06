@@ -103,6 +103,31 @@ w_1c = [
 [20, 153.82586990900003, 1.763812680276606e7, 0.1800671486306438, 0.7994139929314301]
 ]
 
+# Avoid |Omega| complexity by exploiting training data only has rating
+w2_1c = [
+[0, 0.0, 3.4923972344714075e7, 0.3510205089577718, 0.4753335862187586],
+[1, 3.890737663, 2.0650186482471567e7, 0.23643604844121305, 0.733801658808334],
+[2, 9.871741794, 1.7919937083181843e7, 0.1927016951718535, 0.7781138146180607],
+[3, 16.307962327, 1.7707365601119082e7, 0.18474258794462156, 0.7910377289550884],
+[4, 23.579663728, 1.7663148705281988e7, 0.18201973339141664, 0.796294944993741],
+[5, 30.033057022, 1.7649785950477924e7, 0.1809857839424875, 0.7980915688394775],
+[6, 35.415093025000004, 1.7644575966865093e7, 0.18045180573422978, 0.7994476981028341],
+[7, 41.291073448000006, 1.764208463815185e7, 0.1802438940370599, 0.7994307352179486],
+[8, 46.59924277100001, 1.7640725446860168e7, 0.1801828890743176, 0.7995226071699875],
+[9, 51.662319999000005, 1.7639913387628738e7, 0.18009714007327338, 0.7994483908820548],
+[10, 56.594536711, 1.7639394567674506e7, 0.18006125722267952, 0.7995192587547784],
+[11, 61.765958399000006, 1.7639045468658887e7, 0.18004377492931398, 0.7993668362434537],
+[12, 66.675016196, 1.7638800772987455e7, 0.1800488808296141, 0.7993365503582156],
+[13, 71.698221738, 1.7638623461782254e7, 0.18003996064359473, 0.7992946859162385],
+[14, 75.916974961, 1.7638491387219645e7, 0.18002141814511022, 0.7993777123325684],
+[15, 80.132229568, 1.7638390691985846e7, 0.1800447959942229, 0.7993090974153798],
+[16, 84.29285501, 1.7638312377446916e7, 0.18005663149272694, 0.7992865959409045],
+[17, 89.019792915, 1.763825041339206e7, 0.18006222649187578, 0.7992638469850094],
+[18, 94.230977895, 1.763820064625806e7, 0.18006452751016358, 0.7994079770398347],
+[19, 99.580065769, 1.7638160146403477e7, 0.180072617302539, 0.799448248521254],
+[20, 104.26664986, 1.7638126802766066e7, 0.1800671486306438, 0.7994139929314301]
+]
+
 w_4c = [
 [0, 0.0, 3.492397234471353e7, 0.3510205089577718, 0.4753335862187586],
 [1, 2.572523551, 2.0650186482471563e7, 0.23643604844121305, 0.733801658808334],
@@ -160,6 +185,8 @@ c_8t = np.array(c_8t)
 w_1c = np.array(w_1c)
 w_4c = np.array(w_4c)
 w_8c = np.array(w_8c)
+w2_1c = np.array(w2_1c)
+
 # Create plots with pre-defined labels.
 # Alternatively, you can pass labels explicitly when calling `legend`.
 fig, ax = plt.subplots()
@@ -169,14 +196,12 @@ ax.plot(w_8c[:,1], w_8c[:,4], 'c', label='primal 8 cores')
 ax.plot(c_1t[:,1], c_1t[:,4], 'm:', label='collrank 1 thread')
 ax.plot(c_4t[:,1], c_4t[:,4], 'm-.', label='collrank 4 threads')
 ax.plot(c_8t[:,1], c_8t[:,4], 'm', label='collrank 8 threads')
+ax.plot(w2_1c[:,1], w_1c[:,4], 'b', label='primal++ 1 core')
 ax.set_title('MovieLens1m, 200 ratings/user, rank 100, lambda = 5000')
 ax.set_xlabel('Time')
 ax.set_ylabel('NDCG')
 ax.axis([0, 200, 0.4, 0.85])
-# Now add the legend with some customizations.
 legend = ax.legend(loc='lower right', shadow=True)
-
-# The frame is matplotlib.patches.Rectangle instance surrounding the legend.
 frame = legend.get_frame()
 frame.set_facecolor('0.90')
 plt.show()
@@ -188,6 +213,7 @@ ax.plot(w_8c[:,1], w_8c[:,3], 'c', label='primal 8 cores')
 ax.plot(c_1t[:,1], c_1t[:,3], 'm:', label='collrank 1 thread')
 ax.plot(c_4t[:,1], c_4t[:,3], 'm-.', label='collrank 4 threads')
 ax.plot(c_8t[:,1], c_8t[:,3], 'm', label='collrank 8 threads')
+ax.plot(w2_1c[:,1], w_1c[:,3], 'b', label='primal++ 1 core')
 ax.set_title('MovieLens1m, 200 ratings/user, rank 100, lambda = 5000')
 ax.set_xlabel('Time')
 ax.set_ylabel('Pairwise_Error')
@@ -205,6 +231,7 @@ ax.plot(w_8c[:,1], w_8c[:,2], 'c', label='primal 8 cores')
 ax.plot(c_1t[:,1], c_1t[:,2], 'm:', label='collrank 1 thread')
 ax.plot(c_4t[:,1], c_4t[:,2], 'm-.', label='collrank 4 threads')
 ax.plot(c_8t[:,1], c_8t[:,2], 'm', label='collrank 8 threads')
+ax.plot(w2_1c[:,1], w_1c[:,2], 'b', label='primal++ 1 core')
 ax.set_title('MovieLens1m, 200 ratings/user, rank 300, lambda = 5000')
 ax.set_xlabel('Time')
 ax.set_ylabel('Objective_Function')
@@ -213,6 +240,14 @@ legend = ax.legend(loc='upper right', shadow=True)
 frame = legend.get_frame()
 frame.set_facecolor('0.90')
 plt.show()
+
+
+
+
+
+
+
+
 
 # lambda = 1000, rank = 300
 c_1t = [
