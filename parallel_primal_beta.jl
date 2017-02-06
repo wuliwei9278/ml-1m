@@ -30,6 +30,9 @@ function comp_m(U, V, X, d1, d2, rows, vals, cols)
 end
 
 @everywhere function myrange(d1)
+	if nprocs() == 1
+		return 1:d1
+	end
     idx = myid()
     if idx == 1
         # This worker is not assigned a piece
@@ -658,8 +661,8 @@ function main(x, y, v, xx, yy, vv)
 	ndcg_k = 10;
 	# initialize U, V
 	srand(1234)
-	U = 0.01*randn(r, d1); 
-	V = 0.01*randn(r, d2);
+	U = 0.1*randn(r, d1); 
+	V = 0.1*randn(r, d2);
 	U = convert(SharedArray, U)
 	V = convert(SharedArray, V)
 	stepsize = 1
