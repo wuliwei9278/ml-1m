@@ -732,11 +732,11 @@ end
 
 function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	# g,m = obtain_g(U, V, X, d1, d2, lambda, rows, vals)
-	@time m = comp_m(U, V, X, d1, d2, rows, vals, cols);
-#@time infor_list =  precompute(U, V, X, r, d1, d2, lambda, rows, vals, m);
+	m = comp_m(U, V, X, d1, d2, rows, vals, cols);
+	infor_list =  precompute(U, V, X, r, d1, d2, lambda, rows, vals, m);
 	infor_list = [];
-  	@time g = obtain_g_new(U, V, X, d1, d2, lambda, rows, vals,m)
-	@time delta = solve_delta(vec(g), m, U, X, r, d1, d2, lambda, rows, vals, infor_list)
+  	g = obtain_g_new(U, V, X, d1, d2, lambda, rows, vals,m)
+	delta = solve_delta(vec(g), m, U, X, r, d1, d2, lambda, rows, vals, infor_list)
 	delta = reshape(delta, size(V))
 	prev_obj = objective(m, U, V, X, d1, lambda, rows, vals)
 
@@ -747,7 +747,7 @@ function update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 		V = Vold - s * delta
 		m = comp_m(U, V, X, d1, d2, rows, vals, cols);
 		new_obj = objective(m, U, V, X, d1, lambda, rows, vals)
-		println("Line Search iter ", iter, " Prev Obj ", prev_obj, " New Obj ", new_obj)
+		#println("Line Search iter ", iter, " Prev Obj ", prev_obj, " New Obj ", new_obj)
 		if (new_obj < prev_obj)
 			break
 		else
@@ -1358,23 +1358,72 @@ function update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 	return U, total_obj_new
 end
 
-X = readdlm("MovieLens1m.csv", ',' , Int64);
-x = vec(X[:,1]) + 1; # userid starting from 0
-y = vec(X[:,2]) + 1; # same for movieid
-#X = readdlm("ml10m_ratings", ' ', Int64);
-#x = vec(X[:,1])
-#y = vec(X[:,2])
-v = vec(X[:,3]);
-#X = readdlm("outputtr", ' ', Int64);
-#x = vec(X[:,1])
-#y = vec(X[:,2])
-#v = vec(X[:,3])
-#main(x, y, v);
+function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+	sum_error = 0.; ndcg_sum = 0.;
+	for i = 1:d1
+		tmp = nzrange(Y, i)
+		d2_bar = rows_t[tmp];
+		vals_d2_bar = vals_t[tmp];
+		ui = U[:, i]
+		len = size(d2_bar)[1]
+		score = zeros(len)
+		for j = 1:len
+			J = d2_bar[j];
+			vj = V[:, J]
+			score[j] = dot(ui,vj)
+		end
+		error_this = 0
+		n_comps_this = 0
+		for j in 1:(len - 1)
+			jval = vals_d2_bar[j]
+			for k in (j + 1):len
+				kval = vals_d2_bar[k]
+				if score[j] >= score[k] && jval < kval
+					error_this += 1
+				end
+				if score[j] <= score[k] && jval > kval
+					error_this += 1
+				end
+				n_comps_this += 1
+			end
+		end
+		sum_error += error_this / n_comps_this
 
-function main(x, y, v)
+
+		p1 = sortperm(score, rev = true)
+		p1 = p1[1:ndcg_k]
+		M1 = vals_d2_bar[p1]
+		p2 = sortperm(vals_d2_bar, rev = true)
+		p2 = p2[1:ndcg_k]
+		M2 = vals_d2_bar[p2]
+		dcg = 0.; dcg_max = 0.
+		for k = 1:ndcg_k
+			dcg += (2 ^ M1[k] - 1) / log2(k + 1)
+			dcg_max += (2 ^ M2[k] - 1) / log2(k + 1)
+		end
+		ndcg_sum += dcg / dcg_max
+	end
+	return sum_error / d1, ndcg_sum / d1
+end
+
+
+#X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
+#X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
+X = readdlm("netflix_train_ratings.csv", ',', Int64);
+x = vec(X[:,1]);
+y = vec(X[:,2]);
+v = vec(X[:,3]);
+#Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
+#Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
+Y = readdlm("netflix_test_ratings.csv", ',', Int64);
+xx = vec(Y[:,1]);
+yy = vec(Y[:,2]);
+vv = vec(Y[:,3]);
+
+function main(x, y, v, xx, yy, vv)
 	# userid; movieid
 #	n = 6040; msize = 3952;
-	n = maximum(x); msize=maximum(y);
+	n = max(maximum(x), maximum(xx)); msize = max(maximum(y), maximum(yy));
 	X = sparse(x, y, v, n, msize); # userid by movieid
 	# julia column major 
 	# now moveid by userid
@@ -1398,24 +1447,49 @@ function main(x, y, v)
 		end
 	end
 
+	Y = sparse(xx, yy, vv, n, msize);
+	Y = Y';
+	rows_t = rowvals(Y);
+	vals_t = nonzeros(Y);
+	cols_t = zeros(Int, size(vals_t)[1]);
+	cc = 0;
+	for i = 1:d1
+		tmp = nzrange(Y, i);
+		nowlen = size(tmp)[1];
+		for j = 1:nowlen
+			cc += 1
+			cols_t[cc] = i
+		end
+	end
+
 	r = 100; 
 	lambda = 5000;
 #	lambda = 100000;
+	ndcg_k = 10;
 	# initialize U, V
 	srand(1234)
 	U = 0.1*randn(r, d1);	V = 0.1*randn(r, d2);
 	stepsize = 1
 
-	totaltime = 0.0;
+	
+	totaltime = 0.00000;
+	println("iter time objective_function pairwise_error NDCG")
+	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+	m = comp_m(U, V, X, d1, d2, rows, vals, cols)
+	nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
+	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
+
 	for iter in 1:20
 		tic();
 #	println("Outer iteration: ", iter)
 
-@time V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
+		V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	
-@time U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
-		totaltime += toc();
-		println("Iter ", iter, " Time ", totaltime, " obj ", nowobj)
+		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
+		totaltime += toq();
+		#println("Iter ", iter, " Time ", totaltime, " obj ", nowobj)
+		pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+		println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
 
 	end
 #	return V, U
