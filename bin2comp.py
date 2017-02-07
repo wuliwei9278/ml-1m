@@ -13,9 +13,7 @@ def pair_comp(x, y):
     return x[0] - y[0]
 
 def write_comps(f, user_id, left_items, n_items, n_comps):
-  # left_items: store iid of bitwise rating of 1
-  # right_items: store iid of bitwise rating of 0
-  right_items = [e for e in xrange(n_items) if e not in left_items]
+  right_items = [e for e in xrange(1, n_items+1) if e not in left_items]
 
   n_left = len(left_items) 
   n_right = len(right_items) 
@@ -25,16 +23,27 @@ def write_comps(f, user_id, left_items, n_items, n_comps):
 
   comps_list = [] 
   _random, _int = random.random, int
+  s1 = set()
+  s2 = set()
   for i in xrange(int(n_comps)):
     li = _int(_random() * n_left)
     ri = _int(_random() * n_right)
-    comps_list.append((left_items[li], right_items[ri]))
+    l = left_items[li]
+    r = right_items[ri]
+    s1.add(l) # store iid of sampled bitwise rating of 1
+    s2.add(r) # store iid of sampled bitwise rating of 0
+    comps_list.append((l, r))
 
   comps_list.sort(cmp = pair_comp)
   
   for (l, r) in comps_list:
     print(user_id, l, r, file=f)
-  return right_items
+
+  s1 = list(s1)
+  s2 = list(s2)
+  s1.sort()
+  s2.sort()
+  return s1, s2
 
 def bin2comp(filename, output, f_train, f_test, n_comps):
   n_users = 0
@@ -76,10 +85,10 @@ def bin2comp(filename, output, f_train, f_test, n_comps):
         break
 
     if len(left_items) > 0 and len(left_items) < n_items:
-      right_items = write_comps(g1, u, left_items, n_items, n_comps)
-      for i in left_items:
+      s1,s2 = write_comps(g1, u, left_items, n_items, n_comps)
+      for i in s1:
         print(str(u) + "," + str(i) + ",1" , file=g4)
-      for i in right_items:
+      for i in s2:
         print(str(u) + "," + str(i) + ",-1" , file=g4)
 
 
