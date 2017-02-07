@@ -1406,7 +1406,7 @@ function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t,
 	return sum_error / d1, ndcg_sum / d1
 end
 
-function compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
+function compute_precision(U, V, X, Y, d1, d2, rows, vals, rows_t)
 	K = [1, 5, 10, 100] # K has to be increasing order
 	precision = [0, 0, 0, 0]
 	for i = 1:d1
@@ -1416,6 +1416,9 @@ function compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
 			continue
 		end
 		tmp = nzrange(X, i)
+		vals_d2_bar = vals[tmp]
+		# need to distinguish 1 and -1, only treating 1 as train, since -1 can contain test data
+		tmp = tmp[vals_d2_bar .== 1]
 		train = Set(rows[tmp])
 		score = zeros(d2)
 		ui = U[:, i]
@@ -1519,11 +1522,11 @@ function main(x, y, v, xx, yy, vv)
 
 	
 	totaltime = 0.00000;
-	println("iter time objective_function precision")
+	println("iter time objective_function precision@K = 1, 5, 10, 100")
 	#pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	m = comp_m(U, V, X, d1, d2, rows, vals, cols)
 	nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
-	p1,p2,p3,p4 = compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
+	p1,p2,p3,p4 = compute_precision(U, V, X, Y, d1, d2, rows, vals, rows_t)
 	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", p1, ", ", p2, ", ", p3, ", ", p4, "],")
 	for iter in 1:20
 		tic();
@@ -1533,7 +1536,7 @@ function main(x, y, v, xx, yy, vv)
 		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		totaltime += toq();
 
-		p1,p2,p3,p4 =compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
+		p1,p2,p3,p4 =compute_precision(U, V, X, Y, d1, d2, rows, vals, rows_t)
 		println("[", 0, ", ", totaltime, ", ", nowobj, ", ", p1, ", ", p2, ", ", p3, ", ", p4, "],")
 
 	end
