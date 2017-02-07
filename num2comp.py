@@ -1,5 +1,6 @@
 # python num2comp.py MovieLens1m.csv -o ml1m -n 200
-
+# python num2comp.py ml10m_ratings -o ml10m -n 200
+# python num2comp.py netflix -o netflix -n 100
 '''Generate training set and test set files (user, item, rating) triples'''
 from __future__ import print_function
 import os

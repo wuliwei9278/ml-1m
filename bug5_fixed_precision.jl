@@ -1,4 +1,4 @@
-function compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
+function compute_precision(U, V, X, Y, d1, d2, rows, vals, rows_t)
 	K = [1, 5, 10, 100] # K has to be increasing order
 	precision = [0, 0, 0, 0]
 	for i = 1:d1
@@ -8,6 +8,9 @@ function compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
 			continue
 		end
 		tmp = nzrange(X, i)
+		vals_d2_bar = vals[tmp]
+		# need to distinguish 1 and -1, only treating 1 as train, since -1 can contain test data
+		tmp = tmp[vals_d2_bar .== 1]
 		train = Set(rows[tmp])
 		score = zeros(d2)
 		ui = U[:, i]
