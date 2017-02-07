@@ -1,4 +1,4 @@
-# python bin2comp.py MovieLens1m.csv -o ml1m-bin -c 5000
+# python bin2comp.py MovieLens1m.csv -o ml1m-bin -c 1000
 '''Generate training set and test set files from (user, item) pairs'''
 from __future__ import print_function
 import sys
@@ -13,10 +13,12 @@ def pair_comp(x, y):
     return x[0] - y[0]
 
 def write_comps(f, user_id, left_items, n_items, n_comps):
+  # left_items: store iid of bitwise rating of 1
+  # right_items: store iid of bitwise rating of 0
   right_items = [e for e in xrange(n_items) if e not in left_items]
 
-  n_left = len(left_items)
-  n_right = len(right_items)
+  n_left = len(left_items) 
+  n_right = len(right_items) 
 
   if not n_left or not n_right:
     return  
@@ -32,6 +34,7 @@ def write_comps(f, user_id, left_items, n_items, n_comps):
   
   for (l, r) in comps_list:
     print(user_id, l, r, file=f)
+  return right_items
 
 def bin2comp(filename, output, f_train, f_test, n_comps):
   n_users = 0
@@ -61,9 +64,10 @@ def bin2comp(filename, output, f_train, f_test, n_comps):
   test_pairs.sort(cmp=pair_comp)
 
   g1 = open(output+'_train.dat', 'w')
+  g4 = open(output + '_train.csv', 'w')
   idx = 0
   for u in xrange(1, n_users+1):
-    left_items = []
+    left_items = [] # just the ones here
 
     while train_pairs[idx][0] == u:
       left_items.append(train_pairs[idx][1])
@@ -72,16 +76,23 @@ def bin2comp(filename, output, f_train, f_test, n_comps):
         break
 
     if len(left_items) > 0 and len(left_items) < n_items:
-      write_comps(g1, u, left_items, n_items, n_comps)
+      right_items = write_comps(g1, u, left_items, n_items, n_comps)
+      for i in left_items:
+        print(str(u) + "," + str(i) + ",1" , file=g4)
+      for i in right_items:
+        print(str(u) + "," + str(i) + ",-1" , file=g4)
+
+
   g1.close()
+  g4.close()
 
   g2 = open(output+'_train_bin.dat','w')
-  g4 = open(output + '_train.csv', 'w')
+  #g4 = open(output + '_train.csv', 'w')
   for uid, iid in train_pairs:
     print(uid, iid, file=g2)
-    print(str(uid) + "," + str(iid) + ",1" , file=g4)
+  #  print(str(uid) + "," + str(iid) + ",1" , file=g4)
   g2.close()
-  g4.close()
+  #g4.close()
 
   g3 = open(output+'_test.dat','w')
   g5 = open(output + '_test.csv', 'w') 
