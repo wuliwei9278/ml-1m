@@ -1409,13 +1409,15 @@ end
 
 #X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
 #X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
-X = readdlm("netflix_train_ratings.csv", ',', Int64);
+#X = readdlm("netflix_train_ratings.csv", ',', Int64);
+X = readdlm("ml1m-bin_train.csv", ',', Int64);
 x = vec(X[:,1]);
 y = vec(X[:,2]);
 v = vec(X[:,3]);
 #Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
 #Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
-Y = readdlm("netflix_test_ratings.csv", ',', Int64);
+#Y = readdlm("netflix_test_ratings.csv", ',', Int64);
+Y = readdlm("ml1m-bin_test.csv", ',', Int64);
 xx = vec(Y[:,1]);
 yy = vec(Y[:,2]);
 vv = vec(Y[:,3]);
@@ -1463,8 +1465,8 @@ function main(x, y, v, xx, yy, vv)
 	end
 
 	r = 100; 
-	#lambda = 5000;
-	lambda = 7000;
+	lambda = 5000;
+	#lambda = 7000;
 	#lambda = 10000; # works better for netflix data
 	ndcg_k = 10;
 	# initialize U, V
@@ -1476,11 +1478,11 @@ function main(x, y, v, xx, yy, vv)
 	
 	totaltime = 0.00000;
 	println("iter time objective_function pairwise_error NDCG")
-	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+	#pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	m = comp_m(U, V, X, d1, d2, rows, vals, cols)
 	nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
-	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
-
+	#println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
+	println("[", 0, ", ", totaltime, ", ", nowobj, "],")
 	for iter in 1:20
 		tic();
 #	println("Outer iteration: ", iter)
@@ -1490,8 +1492,9 @@ function main(x, y, v, xx, yy, vv)
 		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		totaltime += toq();
 		#println("Iter ", iter, " Time ", totaltime, " obj ", nowobj)
-		pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-		println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
+		#pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
+		#println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
+		println("[", iter, ", ", totaltime, ", ", nowobj, "],")
 
 	end
 #	return V, U
