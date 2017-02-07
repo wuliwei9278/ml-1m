@@ -1406,6 +1406,48 @@ function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t,
 	return sum_error / d1, ndcg_sum / d1
 end
 
+function compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
+	K = [1, 5, 10, 100] # K has to be increasing order
+	precision = [0, 0, 0, 0]
+	for i = 1:d1
+		tmp = nzrange(Y, i)
+		test = Set(rows_t[tmp])
+		if isempty(test)
+			continue
+		end
+		tmp = nzrange(X, i)
+		train = Set(rows[tmp])
+		score = zeros(d2)
+		ui = U[:, i]
+		for j = 1:d2
+			if j in train
+				score[j] = -10e10
+				continue
+			end
+			vj = V[:, j]
+			score[j] = dot(ui,vj)
+		end
+		p = sortperm(score, rev = true)
+		for c = 1: K[length(K)]
+			j = p[c]
+			if score[j] == -10e10
+				break
+			end
+			if j in test
+				for k in length(K):-1:1
+					if c <= K[k]
+						precision[k] += 1
+					else:
+						break
+					end
+				end
+			end
+		end
+	end
+	precision = precision./K/d1
+	return precision[1], precision[2], precision[3], precision[4]
+end
+
 
 #X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
 #X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
@@ -1468,7 +1510,7 @@ function main(x, y, v, xx, yy, vv)
 	lambda = 5000;
 	#lambda = 7000;
 	#lambda = 10000; # works better for netflix data
-	ndcg_k = 10;
+	#ndcg_k = 10;
 	# initialize U, V
 	srand(1234)
 	U = 0.1*randn(r, d1);	V = 0.1*randn(r, d2);
@@ -1477,24 +1519,22 @@ function main(x, y, v, xx, yy, vv)
 
 	
 	totaltime = 0.00000;
-	println("iter time objective_function pairwise_error NDCG")
+	println("iter time objective_function precision")
 	#pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	m = comp_m(U, V, X, d1, d2, rows, vals, cols)
 	nowobj = objective(m, U, V, X, d1, lambda, rows, vals)
-	#println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
-	println("[", 0, ", ", totaltime, ", ", nowobj, "],")
+	p1,p2,p3,p4 = compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
+	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", p1, ", ", p2, ", ", p3, ", ", p4, "],")
 	for iter in 1:20
 		tic();
-#	println("Outer iteration: ", iter)
 
 		V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	
 		U, nowobj = update_U(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, m)
 		totaltime += toq();
-		#println("Iter ", iter, " Time ", totaltime, " obj ", nowobj)
-		#pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-		#println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
-		println("[", iter, ", ", totaltime, ", ", nowobj, "],")
+
+		p1,p2,p3,p4 =compute_precision(U, V, X, Y, d1, d2, rows, rows_t)
+		println("[", 0, ", ", totaltime, ", ", nowobj, ", ", p1, ", ", p2, ", ", p3, ", ", p4, "],")
 
 	end
 #	return V, U
