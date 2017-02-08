@@ -593,15 +593,18 @@ end
 
 
 
-
+#X = readdlm("ml1m2_train_ratings.csv", ',' , Int64);
+X = readdlm("ml10m3_train_ratings.csv", ',' , Int64);
 #X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
-X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
+#X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
 #X = readdlm("netflix_train_ratings.csv", ',', Int64);
 x = vec(X[:,1]);
 y = vec(X[:,2]);
 v = vec(X[:,3]);
+#Y = readdlm("ml1m2_test_ratings.csv", ',' , Int64);
+Y = readdlm("ml10m3_test_ratings.csv", ',' , Int64);
 #Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
-Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
+#Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
 #Y = readdlm("netflix_test_ratings.csv", ',', Int64);
 xx = vec(Y[:,1]);
 yy = vec(Y[:,2]);
@@ -614,8 +617,9 @@ function main(x, y, v, xx, yy, vv)
 	# userid; movieid
 	# n = 6040; msize = 3952;
 	# depending on the size of X, read n_users and n_items from python output
+	n = max(maximum(x), maximum(xx)); msize = max(maximum(y), maximum(yy));
 	#n = 1496; msize = 3952; 
-	n = 12851; msize = 65134
+	#n = 12851; msize = 65134
     #n = 221004; msize = 17771
 	X = sparse(x, y, v, n, msize); # userid by movieid
 	Y = sparse(xx, yy, vv, n, msize);
@@ -657,8 +661,8 @@ function main(x, y, v, xx, yy, vv)
 
 
 	r = 100; 
-	lambda = 5000; 
-	# lambda = 7000 # works better for movielens10m data
+	#lambda = 5000; 
+	 lambda = 7000 # works better for movielens10m data
 	#lambda = 10000; # works better for netflix data
 	ndcg_k = 10;
 	# initialize U, V
