@@ -1455,17 +1455,17 @@ end
 #X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
 #X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
 #X = readdlm("netflix_train_ratings.csv", ',', Int64);
-X = readdlm("ml1m-bin_train.csv", ',', Int64);
-x = vec(X[:,1]);
-y = vec(X[:,2]);
-v = vec(X[:,3]);
+#X = readdlm("ml1m-bin_train.csv", ',', Int64);
+#x = vec(X[:,1]);
+#y = vec(X[:,2]);
+#v = vec(X[:,3]);
 #Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
 #Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
 #Y = readdlm("netflix_test_ratings.csv", ',', Int64);
-Y = readdlm("ml1m-bin_test.csv", ',', Int64);
-xx = vec(Y[:,1]);
-yy = vec(Y[:,2]);
-vv = vec(Y[:,3]);
+#Y = readdlm("ml1m-bin_test.csv", ',', Int64);
+#xx = vec(Y[:,1]);
+#yy = vec(Y[:,2]);
+#vv = vec(Y[:,3]);
 
 function main(x, y, v, xx, yy, vv)
 	# userid; movieid
