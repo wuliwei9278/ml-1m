@@ -3,7 +3,7 @@
 # python num2comp.py ml10m_ratings -o ml10m3 -n 500
 # python num2comp.py netflix -o netflix -n 100
 # python num2comp.py netflix -o netflix3 -n 500
-# python num2comp.py netflix -o netflix4 -n 100
+# python num2comp.py netflix -o netflix4 -n 200
 '''Generate training set and test set files (user, item, rating) triples'''
 from __future__ import print_function
 import os
