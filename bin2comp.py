@@ -1,4 +1,5 @@
 # python bin2comp.py MovieLens1m.csv -o ml1m-bin -c 1000
+# python bin2comp.py MovieLens1m.csv -o ml1m-bin2 -c 300
 '''Generate training set and test set files from (user, item) pairs'''
 from __future__ import print_function
 import sys
@@ -12,7 +13,7 @@ def pair_comp(x, y):
   else:
     return x[0] - y[0]
 
-def write_comps(f, user_id, left_items, n_items, n_comps):
+def helper(user_id, left_items, n_items, c):
   right_items = [e for e in xrange(1, n_items+1) if e not in left_items]
 
   n_left = len(left_items) 
@@ -25,19 +26,19 @@ def write_comps(f, user_id, left_items, n_items, n_comps):
   _random, _int = random.random, int
   s1 = set()
   s2 = set()
-  for i in xrange(int(n_comps)):
+  for i in xrange(int(c)):
     li = _int(_random() * n_left)
     ri = _int(_random() * n_right)
     l = left_items[li]
     r = right_items[ri]
     s1.add(l) # store iid of sampled bitwise rating of 1
     s2.add(r) # store iid of sampled bitwise rating of 0
-    comps_list.append((l, r))
+    #comps_list.append((l, r))
 
-  comps_list.sort(cmp = pair_comp)
+  #comps_list.sort(cmp = pair_comp)
   
-  for (l, r) in comps_list:
-    print(user_id, l, r, file=f)
+  #for (l, r) in comps_list:
+  #  print(user_id, l, r, file=f)
 
   s1 = list(s1)
   s2 = list(s2)
@@ -45,7 +46,7 @@ def write_comps(f, user_id, left_items, n_items, n_comps):
   s2.sort()
   return s1, s2
 
-def bin2comp(filename, output, f_train, f_test, n_comps):
+def bin2comp(filename, output, f_train, f_test, c):
   n_users = 0
   n_items = 0
   
@@ -72,7 +73,7 @@ def bin2comp(filename, output, f_train, f_test, n_comps):
   test_pairs = pairs_list[n_train:(n_train+n_test)]
   test_pairs.sort(cmp=pair_comp)
 
-  g1 = open(output+'_train.dat', 'w')
+  #g1 = open(output+'_train.dat', 'w')
   g4 = open(output + '_train.csv', 'w')
   idx = 0
   for u in xrange(1, n_users+1):
@@ -85,30 +86,30 @@ def bin2comp(filename, output, f_train, f_test, n_comps):
         break
 
     if len(left_items) > 0 and len(left_items) < n_items:
-      s1,s2 = write_comps(g1, u, left_items, n_items, n_comps)
+      s1,s2 = helper(u, left_items, n_items, c)
       for i in s1:
         print(str(u) + "," + str(i) + ",1" , file=g4)
       for i in s2:
         print(str(u) + "," + str(i) + ",-1" , file=g4)
 
 
-  g1.close()
+  #g1.close()
   g4.close()
 
-  g2 = open(output+'_train_bin.dat','w')
+  #g2 = open(output+'_train_bin.dat','w')
   #g4 = open(output + '_train.csv', 'w')
-  for uid, iid in train_pairs:
-    print(uid, iid, file=g2)
+  #for uid, iid in train_pairs:
+  #  print(uid, iid, file=g2)
   #  print(str(uid) + "," + str(iid) + ",1" , file=g4)
-  g2.close()
+  #g2.close()
   #g4.close()
 
-  g3 = open(output+'_test.dat','w')
+  #g3 = open(output+'_test.dat','w')
   g5 = open(output + '_test.csv', 'w') 
   for uid, iid in test_pairs:
-    print(uid, iid, file=g3)
+   # print(uid, iid, file=g3)
     print(str(uid) + "," + str(iid) + ",1" , file=g5)
-  g3.close()
+  #g3.close()
   g5.close()
   
 
@@ -122,8 +123,8 @@ if __name__ == "__main__":
                       default=.9, help="Fraction of dataset for training (Default .9)") 
   parser.add_argument('-t', '--test_frac', action='store', dest='f_test', type=float,
                       default=.1, help="Fraction of dataset for test (Default .1)")
-  parser.add_argument('-c', '--n_comps', action='store', type=int,
-                      default=1000, help="Number of comparisons per user (Default 1000)")
+  parser.add_argument('-c', '--c', action='store', type=int,
+                      default=100, help="Number of observed 1 per user (Default 100)")
   args = parser.parse_args()
 
   if (args.f_train + args.f_test > 1):
@@ -132,4 +133,4 @@ if __name__ == "__main__":
   if args.output == "":
     args.output = os.path.splitext(os.path.basename(args.input_file))[0]
 
-  bin2comp(args.input_file, args.output, args.f_train, args.f_test, args.n_comps)
+  bin2comp(args.input_file, args.output, args.f_train, args.f_test, args.c)
