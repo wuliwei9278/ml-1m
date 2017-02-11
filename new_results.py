@@ -76,6 +76,14 @@ c_16t = [
 [6, 689.531097, 199233496.196080, 0.191336, 0.657176]
 ]
 
+c_1t = [
+[0, 0.180743, 423548819.048717, 0.389522, 0.273225],
+[1, 966.943761, 256114070.393846, 0.213814, 0.596030],
+[2, 1959.672376, 220438479.731390, 0.187770, 0.666077],
+[3, 3209.017995, 205343697.907428, 0.192710, 0.647136],
+[4, 4355.474008, 201368965.939973, 0.191985, 0.653809]
+]
+
 w_1c = [
 [0, 0.0, 5.902166560936847e8, 0.3886464107151499, 0.2758558730643191],
 [1, 91.183635123, 2.625504453018211e8, 0.2438340458412661, 0.5865134472392063],
@@ -134,6 +142,7 @@ w_8c = [
 [17, 934.2970079950001, 1.976490897884403e8, 0.1916407771819463, 0.6559261843951616]
 ]
 
+c_1t = np.array(c_1t)
 c_8t = np.array(c_8t)
 c_16t = np.array(c_16t)
 w_1c = np.array(w_1c)
@@ -141,16 +150,42 @@ w2_1c = np.array(w2_1c)
 w_4c = np.array(w_4c)
 
 fig, ax = plt.subplots()
-ax.plot(w_1c[:,1], w_1c[:,4], 'r--', label='primal 1 core')
+ax.plot(w_1c[:,1], w_1c[:,4], 'r', label='primal 1 core')
 ax.plot(w2_1c[:,1], w2_1c[:,4], 'b', label='primal++ 1 core')
 #ax.plot(w_4c[:,1], w_4c[:,4], 'k-.', label='primal 4 cores')
-ax.plot(c_8t[:,1], c_8t[:,4], 'm', label='collrank 8 threads')
-ax.plot(c_16t[:,1], c_16t[:,4], 'm--', label='collrank 16 threads')
+ax.plot(c_8t[:,1], c_8t[:,4], 'm--', label='collrank 8 threads')
+ax.plot(c_1t[:,1], c_1t[:,4], 'm', label='collrank 1 threads')
 ax.set_title('MovieLens10m, 500 ratings/user, rank 100, lambda = 7000')
 ax.set_xlabel('Time')
 ax.set_ylabel('NDCG')
-ax.axis([0, 300, 0.25, 0.75])
+ax.axis([0, 2100, 0.25, 0.75])
 legend = ax.legend(loc='lower right', shadow=True)
+frame = legend.get_frame()
+frame.set_facecolor('0.90')
+plt.show()
+
+fig, ax = plt.subplots()
+ax.plot(w_1c[:,1], w_1c[:,3], 'r', label='primal 1 core')
+ax.plot(w2_1c[:,1], w2_1c[:,3], 'b', label='primal++ 1 core')
+ax.plot(c_1t[:,1], c_1t[:,3], 'm', label='collrank 1 threads')
+ax.set_title('MovieLens10m, 500 ratings/user, rank 100, lambda = 7000')
+ax.set_xlabel('Time')
+ax.set_ylabel('Pairwise_Error')
+ax.axis([0, 2100, 0.15, 0.45])
+legend = ax.legend(loc='upper right', shadow=True)
+frame = legend.get_frame()
+frame.set_facecolor('0.90')
+plt.show()
+
+fig, ax = plt.subplots()
+ax.plot(w_1c[:,1], w_1c[:,2], 'r', label='primal 1 core')
+ax.plot(w2_1c[:,1], w2_1c[:,2], 'b', label='primal++ 1 core')
+ax.plot(c_1t[:,1], c_1t[:,2], 'm', label='collrank 1 threads')
+ax.set_title('MovieLens10m, 500 ratings/user, rank 100, lambda = 7000')
+ax.set_xlabel('Time')
+ax.set_ylabel('Objective_Function')
+ax.axis([0, 2100, 1.5e8, 6.5e8])
+legend = ax.legend(loc='upper right', shadow=True)
 frame = legend.get_frame()
 frame.set_facecolor('0.90')
 plt.show()
@@ -198,6 +233,8 @@ frame = legend.get_frame()
 frame.set_facecolor('0.90')
 plt.show()
 
+
+# netflix 
 # first way N = 200
 w2_1c = [
 [0, 0.0, 2.7754824483000426e9, 0.33897966421164927, 0.49844107406957067],
@@ -211,6 +248,25 @@ w2_1c = [
 [8, 7373.275198941999, 1.251907283897667e9, 0.17866040656225515, 0.80744678283374]
 ]
 
+w_1c = [
+[0, 0.0, 2.7754824482995534e9, 0.33897966421164927, 0.49844107406957067],
+[1, 1070.144303483, 1.9139686645054314e9, 0.2526986029777938, 0.7071191628757021],
+[2, 2952.678076598, 1.3780275160640373e9, 0.1906686910354331, 0.7944758307912962]
+]
+
+c_1t = [
+[0, 0.401708, 2201412184.583276, 0.337697, 0.490893],
+[1, 6616.716144, 1683113561.053637, 0.213025, 0.764036],
+[2, 12759.871696, 1452989287.275296, 0.191212, 0.780508],
+[3, 18725.925560, 1303476191.037700, 0.189037, 0.770062],
+[4, 23806.626113, 1268880225.458385, 0.184415, 0.788689],
+[5, 28850.649082, 1259505012.885172, 0.181414, 0.797953],
+[6, 33647.406625, 1255076917.004290, 0.180090, 0.801946],
+[7, 38359.994691, 1252486961.059306, 0.179294, 0.804532],
+[8, 43016.675272, 1250785627.910584, 0.178752, 0.806205],
+[9, 47573.546677, 1249574203.271779, 0.178376, 0.807510],
+[10, 52167.094805, 1248660472.619510, 0.178091, 0.808444]
+]
 
 w2_1c = [
 [0, 0.0, 2.7754824483000426e9, 0.33897966421164927, 0.49844107406957067],
@@ -261,6 +317,21 @@ c_8t = [
 [20, 23991.508058, 1244940420.338070, 0.176992, 0.812381]
 ]
 
+c_8t = np.array(c_8t)
+w2_1c = np.array(w2_1c)
+
+fig, ax = plt.subplots()
+ax.plot(c_8t[:,1], c_8t[:,4], 'm', label='collrank 8 threads')
+ax.plot(w2_1c[:,1], w2_1c[:,4], 'b', label='primal++ 1 core')
+ax.set_title('Netflix, 200 ratings/user, rank 100, lambda = 10000')
+ax.set_xlabel('Time')
+ax.set_ylabel('NDCG')
+ax.axis([0, 20000, 0.45, 0.85])
+legend = ax.legend(loc='lower right', shadow=True)
+frame = legend.get_frame()
+frame.set_facecolor('0.90')
+plt.show()
+
 # first way N = 500
 # liweiwu@illidan:~/ml-1m$ python num2comp.py netflix -o netflix3 -n 500
 # Dataset for 2649430 users, 17771 items loaded.
@@ -291,7 +362,18 @@ w2_1c = [
 [20, 15748.143620102, 2.336631597535149e9, 0.16226899060111685, 0.8180825654696984]
 ]
 
-
+w2_1c = np.array(w2_1c)
+fig, ax = plt.subplots()
+ax.plot(c_8t[:,1], c_8t[:,4], 'm', label='collrank 8 threads')
+ax.plot(w2_1c[:,1], w2_1c[:,4], 'b', label='primal++ 1 core')
+ax.set_title('Netflix, 500 ratings/user, rank 100, lambda = 10000')
+ax.set_xlabel('Time')
+ax.set_ylabel('NDCG')
+ax.axis([0, 20000, 0.45, 0.85])
+legend = ax.legend(loc='lower right', shadow=True)
+frame = legend.get_frame()
+frame.set_facecolor('0.90')
+plt.show()
 
 
 #author's code
@@ -352,16 +434,16 @@ w2_1c = [
 
 
 
-#w_1c = np.array(w_1c)
+w_1c = np.array(w_1c)
 w2_1c = np.array(w2_1c)
 w_4c = np.array(w_4c)
 
 fig, ax = plt.subplots()
-#ax.plot(w_1c[:,1], w_1c[:,4], 'r--', label='primal 1 core')
+ax.plot(w_1c[:,1], w_1c[:,4], 'r--', label='primal 1 core')
 ax.plot(w2_1c[:,1], w2_1c[:,4], 'b', label='primal++ 1 core')
 ax.plot(w_4c[:,1], w_4c[:,4], 'k-.', label='primal 4 cores')
 
-ax.set_title('MovieLens10m, 500 ratings/user, rank 100, lambda = 7000')
+ax.set_title('Netflix, all but 10 ratings/user, rank 100, lambda = 10000')
 ax.set_xlabel('Time')
 ax.set_ylabel('NDCG')
 ax.axis([0, 25000, 0.75, 0.95])

@@ -620,7 +620,7 @@ function main(x, y, v, xx, yy, vv)
 	n = max(maximum(x), maximum(xx)); msize = max(maximum(y), maximum(yy));
 	#n = 1496; msize = 3952; 
 	#n = 12851; msize = 65134
-    #n = 221004; msize = 17771
+    #n = 221004; msize = 17771 # 417737 users ratings >= 20
 	X = sparse(x, y, v, n, msize); # userid by movieid
 	Y = sparse(xx, yy, vv, n, msize);
 	# julia column major 
