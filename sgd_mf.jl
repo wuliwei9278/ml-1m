@@ -1,4 +1,21 @@
-
+function compute_RMSE(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+	res = 0.0
+	n = 0.0
+	for i = 1:d1
+		tmp = nzrange(Y, i)
+		d2_bar = rows_t[tmp];
+		vals_d2_bar = vals_t[tmp];
+		ui = U[:, i]
+		len = size(d2_bar)[1]
+		for j = 1:len
+			J = d2_bar[j];
+			vj = V[:, J]
+			res += (vals_d2_bar[j] - dot(ui,vj))^2
+			n += 1.0
+		end
+	end
+	return (res / n)^0.5
+end
 
 function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	sum_error = 0.; ndcg_sum = 0.;
@@ -76,10 +93,12 @@ function update(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 end
 
 X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
+#X = readdlm("ml10m3_train_ratings.csv", ',' , Int64);
 x = vec(X[:,1]);
 y = vec(X[:,2]);
 v = vec(X[:,3]);
 Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
+#Y = readdlm("ml10m3_test_ratings.csv", ',' , Int64);
 xx = vec(Y[:,1]);
 yy = vec(Y[:,2]);
 vv = vec(Y[:,3]);
@@ -141,17 +160,17 @@ function main(x, y, v, xx, yy, vv)
 	U = 0.1*randn(r, d1); V = 0.1*randn(r, d2);
 	# U = 0.01*randn(r, d1); V = 0.01*randn(r, d2); # works better for netflix data
 
+	#stepsize = 0.0001
 	stepsize = 0.0001
-
 	totaltime = 0.00000;
-	println("iter time objective_function pairwise_error NDCG")
+	println("iter time objective_function pairwise_error NDCG RMSE")
 	
 
 	pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	
 	nowobj = objective(U, V, X, d1, lambda, rows, vals)
-	
-	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
+	rmse = compute_RMSE(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, ", ", rmse, "],")
 
 	for iter in 1:1000000
 		tic();
@@ -171,7 +190,8 @@ function main(x, y, v, xx, yy, vv)
 	 	if iter % 5000 == 0
 	 		nowobj = objective(U, V, X, d1, lambda, rows, vals)
 	 		pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-			println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, "],")
+	 		rmse = compute_RMSE(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
+			println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, ", ", rmse, "],")
 	 	end
 	 	
 
