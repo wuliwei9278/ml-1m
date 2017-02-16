@@ -17,6 +17,25 @@ function compute_RMSE(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 	return (res / n)^0.5
 end
 
+function compute_RMSE_train(U, V, X, r, d1, d2, rows, vals, cols)
+	res = 0.0
+	n = 0.0
+	for i = 1:d1
+		tmp = nzrange(X, i)
+		d2_bar = rows[tmp];
+		vals_d2_bar = vals[tmp];
+		ui = U[:, i]
+		len = size(d2_bar)[1]
+		for j = 1:len
+			J = d2_bar[j];
+			vj = V[:, J]
+			res += (vals_d2_bar[j] - dot(ui,vj))^2
+			n += 1.0
+		end
+	end
+	return (res / n)^0.5
+end
+
 function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	sum_error = 0.; ndcg_sum = 0.;
 	for i = 1:d1
@@ -170,9 +189,10 @@ function main(x, y, v, xx, yy, vv)
 	
 	nowobj = objective(U, V, X, d1, lambda, rows, vals)
 	rmse = compute_RMSE(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
-	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, ", ", rmse, "],")
+	rmse_tr = compute_RMSE_train(U, V, X, r, d1, d2, rows, vals, cols)
+	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, ", ", rmse, ", ", rmse_tr, "],")
 
-	for iter in 1:1000000
+	for iter in 1:10000000
 		tic();
 
  		#V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
@@ -187,11 +207,12 @@ function main(x, y, v, xx, yy, vv)
 
 		#pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 		#ndcg = compute_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-	 	if iter % 5000 == 0
+	 	if iter % 50000 == 0
 	 		nowobj = objective(U, V, X, d1, lambda, rows, vals)
 	 		pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	 		rmse = compute_RMSE(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
-			println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, ", ", rmse, "],")
+	 		rmse_tr = compute_RMSE_train(U, V, X, r, d1, d2, rows, vals, cols)
+			println("[", iter, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, ", ", rmse_tr, ", ", rmse, "],")
 	 	end
 	 	
 
