@@ -103,9 +103,13 @@ end
 
 
 function update(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
-	i = rand(1:d1)
-	j = rand(1:d2)
-	eij = X[j, i] - dot(U[:,i], V[:,j])
+	l = rand(1:length(rows))
+	j = rows[l]
+	i = cols[l]
+	#i = rand(1:d1)
+	#j = rand(1:d2)
+	#eij = X[j, i] - dot(U[:,i], V[:,j])
+	eij = vals[l] - dot(U[:,i], V[:,j])
 	ui = U[:,i] + stepsize * (eij * V[:,j] - lambda * U[:,i])
 	vj = V[:,j] + stepsize * (eij * U[:,i] - lambda * V[:,j])
 	for k in 1:r
@@ -119,13 +123,15 @@ function update(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	return U, V
 end
 
-#X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
-X = readdlm("ml10m3_train_ratings.csv", ',' , Int64);
+X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
+#X = readdlm("ml10m3_train_ratings.csv", ',' , Int64);
+#X = readdlm("netflix3_train_ratings.csv", ',' , Int64);
 x = vec(X[:,1]);
 y = vec(X[:,2]);
 v = vec(X[:,3]);
-#Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
-Y = readdlm("ml10m3_test_ratings.csv", ',' , Int64);
+Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
+#Y = readdlm("ml10m3_test_ratings.csv", ',' , Int64);
+#Y = readdlm("netflix3_test_ratings.csv", ',' , Int64);
 xx = vec(Y[:,1]);
 yy = vec(Y[:,2]);
 vv = vec(Y[:,3]);
@@ -215,8 +221,8 @@ function main(x, y, v, xx, yy, vv)
 
 		#pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 		#ndcg = compute_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-	 	#if iter % 3000000 == 0
-	 	if iter % 10000000 == 0
+	 	if iter % 3000000 == 0
+	 	#if iter % 10000000 == 0
 	 		nowobj = objective(U, V, X, d1, lambda, rows, vals)
 	 		pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	 		rmse = compute_RMSE(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
