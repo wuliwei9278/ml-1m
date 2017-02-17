@@ -36,6 +36,22 @@ function compute_RMSE_train(U, V, X, r, d1, d2, rows, vals, cols)
 	return (res / n)^0.5
 end
 
+function objective(U, V, X, d1, lambda, rows, vals)
+	res = 0.0
+	res = lambda * (vecnorm(U) ^ 2 + vecnorm(V) ^ 2)
+	for i in 1:d1
+		tmp = nzrange(X, i)
+		d2_bar = rows[tmp];
+		vals_d2_bar = vals[tmp];
+		len = size(d2_bar)[1];
+		for k in 1:len
+			j = d2_bar[k]
+			res += (vals_d2_bar[k] - dot(U[:,i], V[:,j]))^2
+		end
+	end
+	return res
+end
+
 function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	sum_error = 0.; ndcg_sum = 0.;
 	for i = 1:d1
@@ -84,21 +100,7 @@ function compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t,
 	return sum_error / d1, ndcg_sum / d1
 end
 
-function objective(U, V, X, d1, lambda, rows, vals)
-	res = 0.0
-	res = lambda * (vecnorm(U) ^ 2 + vecnorm(V) ^ 2)
-	for i in 1:d1
-		tmp = nzrange(X, i)
-		d2_bar = rows[tmp];
-		vals_d2_bar = vals[tmp];
-		len = size(d2_bar)[1];
-		for k in 1:len
-			j = d2_bar[k]
-			res += (vals_d2_bar[k] - dot(U[:,i], V[:,j]))^2
-		end
-	end
-	return res
-end
+
 
 function update(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	i = rand(1:d1)
@@ -106,18 +108,24 @@ function update(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
 	eij = X[j, i] - dot(U[:,i], V[:,j])
 	ui = U[:,i] + stepsize * (eij * V[:,j] - lambda * U[:,i])
 	vj = V[:,j] + stepsize * (eij * U[:,i] - lambda * V[:,j])
-	U[:,i] = ui
-	V[:,j] = vj
+	for k in 1:r
+		U[k, i] = ui[k]
+	end
+	for k in 1:r
+		V[k, j] = vj[k]
+	end
+	#U[:,i] = ui
+	#V[:,j] = vj
 	return U, V
 end
 
-X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
-#X = readdlm("ml10m3_train_ratings.csv", ',' , Int64);
+#X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
+X = readdlm("ml10m3_train_ratings.csv", ',' , Int64);
 x = vec(X[:,1]);
 y = vec(X[:,2]);
 v = vec(X[:,3]);
-Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
-#Y = readdlm("ml10m3_test_ratings.csv", ',' , Int64);
+#Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
+Y = readdlm("ml10m3_test_ratings.csv", ',' , Int64);
 xx = vec(Y[:,1]);
 yy = vec(Y[:,2]);
 vv = vec(Y[:,3]);
@@ -170,17 +178,17 @@ function main(x, y, v, xx, yy, vv)
 
 
 	r = 100; 
-	lambda = 5000; 
+	lambda = 0.1
 	#lambda = 7000 # works better for movielens10m data
 	#lambda = 10000; # works better for netflix data
 	ndcg_k = 10;
 	# initialize U, V
-	srand(1234)
-	U = 0.1*randn(r, d1); V = 0.1*randn(r, d2);
+	
+	U = randn(r, d1); V = randn(r, d2);
 	# U = 0.01*randn(r, d1); V = 0.01*randn(r, d2); # works better for netflix data
 
 	#stepsize = 0.0001
-	stepsize = 0.0001
+	stepsize = 0.01
 	totaltime = 0.00000;
 	println("iter time objective_function pairwise_error NDCG RMSE")
 	
@@ -192,7 +200,7 @@ function main(x, y, v, xx, yy, vv)
 	rmse_tr = compute_RMSE_train(U, V, X, r, d1, d2, rows, vals, cols)
 	println("[", 0, ", ", totaltime, ", ", nowobj, ", ", pairwise_error, ", ", ndcg, ", ", rmse, ", ", rmse_tr, "],")
 
-	for iter in 1:10000000
+	for iter in 1:1000000000
 		tic();
 
  		#V, m, nowobj  = update_V(U, V, X, r, d1, d2, lambda, rows, vals, stepsize, cols)
@@ -207,7 +215,8 @@ function main(x, y, v, xx, yy, vv)
 
 		#pairwise_error = compute_pairwise_error(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
 		#ndcg = compute_NDCG(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
-	 	if iter % 50000 == 0
+	 	#if iter % 3000000 == 0
+	 	if iter % 10000000 == 0
 	 		nowobj = objective(U, V, X, d1, lambda, rows, vals)
 	 		pairwise_error, ndcg = compute_pairwise_error_ndcg(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t, ndcg_k)
 	 		rmse = compute_RMSE(U, V, Y, r, d1, d2, rows_t, vals_t, cols_t)
