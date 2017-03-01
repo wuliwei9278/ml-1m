@@ -16,14 +16,15 @@ Our trained model can be tested in terms of NDCG@10, pairwise error and objectiv
 
 1. Prepare a dataset of the form (user, item, ratings) triple in csv file. (Example: data/MovieLens1m.csv)
 
-2. Run util/split1.py to get training data and test data by specifying the number of subsamples N to use as what we did in Section 5.1 in the paper 
+2. Run util/split1.py to get training data and test data by specifying the number of subsamples N to use as what we did in Section 5.1 in the paper:
+
+	```
+	$ python util/split1.py data/MovieLens1m.csv -o ml1m -n 200
+	```
 **or** 
 Run util/split2.py to get multiple training data of C = 100, 200, d2 but the same test data as what we did in Section 5.3:  
 
 	
-	```
-	$ python util/split1.py data/MovieLens1m.csv -o ml1m -n 200
-	```
 
 	```
 	$ python util/split2.py data/MovieLens1m.csv -o ml1m
@@ -54,9 +55,9 @@ Run util/split2.py to get multiple training data of C = 100, 200, d2 but the sam
 	```
 	julia> main("ml1m_train_ratings.csv", "ml1m_test_ratings.csv", 100, 5000)
 	```
-  	 Use `ctrl - c` to stop after it starts printing the results for the 1st iteration and 	type again 
+  	 Use `ctrl - c` to stop the program after it starts printing the results for the 1st iteration and 	type again 
 	```
 	julia> main("ml1m_train_ratings.csv", "ml1m_test_ratings.csv", 100, 5000)
 	```
-	One can replace the arguments for the main function by changing the training & test data 	file paths, and rank & lambda parameter in the model. The reason to type the same command 	twice in Julia command line is that the first time Julia will first compile the codes and 	the second time the codes will run much faster because the compilation time is saved.
+	One can replace the arguments for the main function by changing the training & test data 	file paths, and rank & lambda parameter in the model. *The reason to type the same command 	twice in Julia command line is that the first time Julia will first compile the codes and 	the second time the codes will run much faster because the compilation time is saved.*
 
