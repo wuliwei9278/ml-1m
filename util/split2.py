@@ -34,7 +34,7 @@ def num2comp(filename, output):
   triples_list = []
   f = open(filename, 'r')
   for line in f:
-    (user_id, item_id, rating) = line.strip().split()
+    (user_id, item_id, rating) = line.strip().split(",")
     triples_list.append((int(user_id) + 1, int(item_id) + 1, float(rating)))
     n_users = max(n_users, int(user_id) + 1)
     n_items = max(n_items, int(item_id) + 1)

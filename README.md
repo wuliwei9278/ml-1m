@@ -1,6 +1,6 @@
 ### Large-scale Collaborative Ranking in Near-Linear Time
 
-This repo consists of three folders:
+This repo consists of four folders:
 - data folder: sample data “MovieLens1m.csv” can be found there, the data is of the form: “user id, movie id, rating”.
 - util folder: python scripts to divide data into training and testing dataset (instructions on how to use these utilities functions are given below).
 - code folder: Julia code which implements the primal-CR and primal-CR++ algorithm described in the paper is put into this folder (instructions on how to run the codes are given below).
