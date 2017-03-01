@@ -59,5 +59,5 @@ Run util/split2.py to get multiple training data of C = 100, 200, d2 but the sam
 	```
 	julia> main("ml1m_train_ratings.csv", "ml1m_test_ratings.csv", 100, 5000)
 	```
-	One can replace the arguments for the main function by changing the training & test data 	file paths, and rank & lambda parameter in the model. *The reason to type the same command 	twice in Julia command line is that the first time Julia will first compile the codes and 	the second time the codes will run much faster because the compilation time is saved.*
+	One can replace the arguments for the main function by changing the training & test data 	file paths, and rank & lambda parameter in the model. (The reason to type the same command 	twice in Julia command line is that the first time Julia will first compile the codes and 	the second time the codes will run much faster because the compilation time is saved)
 
