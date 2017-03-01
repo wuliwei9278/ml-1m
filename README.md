@@ -1,5 +1,5 @@
-### Large-scale Collaborative Ranking in Near-Linear Time
-
+# Large-scale Collaborative Ranking in Near-Linear Time
+## Description: 
 This repo consists of four folders:
 - data folder: sample data “MovieLens1m.csv” can be found there, the data is of the form: “user id, movie id, rating”.
 - util folder: python scripts to divide data into training and testing dataset (instructions on how to use these utilities functions are given below).
@@ -9,7 +9,7 @@ This repo consists of four folders:
 
 
 
-#### Instructions on how to run the code:
+## Instructions on how to run the code:
 Our trained model can be tested in terms of NDCG@10, pairwise error and objective function.
 
 
