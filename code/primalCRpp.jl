@@ -1452,9 +1452,9 @@ function compute_precision(U, V, X, Y, d1, d2, rows, vals, rows_t)
 end
 
 # command to run julia program after include this file
-# main("data/ml1m_train_ratings.csv", "data/ml1m_test_ratings.csv")
+# main("data/ml1m_train_ratings.csv", "data/ml1m_test_ratings.csv", 100, 5000)
 
-function main(x, y, v, xx, yy, vv)
+function main(train, test, r, lambda)
 	X = readdlm(train, ',' , Int64);
 	x = vec(X[:,1]);
 	y = vec(X[:,2]);
@@ -1509,9 +1509,9 @@ function main(x, y, v, xx, yy, vv)
 	end
 
 
-	r = 100; 
+	#r = 100; 
 	#lambda = 5000; 
-	 lambda = 7000 # works better for movielens10m data
+	# lambda = 7000 # works better for movielens10m data
 	#lambda = 10000; # works better for netflix data
 	ndcg_k = 10;
 	# initialize U, V

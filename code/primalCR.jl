@@ -593,27 +593,19 @@ end
 
 
 
-#X = readdlm("ml1m2_train_ratings.csv", ',' , Int64);
-X = readdlm("ml10m3_train_ratings.csv", ',' , Int64);
-#X = readdlm("ml1m_train_ratings.csv", ',' , Int64);
-#X = readdlm("ml10m_train_ratings.csv", ',' , Int64);
-#X = readdlm("netflix_train_ratings.csv", ',', Int64);
-x = vec(X[:,1]);
-y = vec(X[:,2]);
-v = vec(X[:,3]);
-#Y = readdlm("ml1m2_test_ratings.csv", ',' , Int64);
-Y = readdlm("ml10m3_test_ratings.csv", ',' , Int64);
-#Y = readdlm("ml1m_test_ratings.csv", ',' , Int64);
-#Y = readdlm("ml10m_test_ratings.csv", ',' , Int64);
-#Y = readdlm("netflix_test_ratings.csv", ',', Int64);
-xx = vec(Y[:,1]);
-yy = vec(Y[:,2]);
-vv = vec(Y[:,3]);
+
 
 # command to run julia program after include this file
-# main(x, y, v, xx, yy, vv)
-
-function main(x, y, v, xx, yy, vv)
+# main("data/ml1m_train_ratings.csv", "data/ml1m_test_ratings.csv", 100, 5000)
+function main(train, test, r, lambda)
+	X = readdlm(train, ',' , Int64);
+	x = vec(X[:,1]);
+	y = vec(X[:,2]);
+	v = vec(X[:,3]);
+	Y = readdlm(test, ',' , Int64);
+	xx = vec(Y[:,1]);
+	yy = vec(Y[:,2]);
+	vv = vec(Y[:,3]);
 	# userid; movieid
 	# n = 6040; msize = 3952;
 	# depending on the size of X, read n_users and n_items from python output
@@ -660,9 +652,9 @@ function main(x, y, v, xx, yy, vv)
 	end
 
 
-	r = 100; 
+	#r = 100; 
 	#lambda = 5000; 
-	 lambda = 7000 # works better for movielens10m data
+	# lambda = 7000 # works better for movielens10m data
 	#lambda = 10000; # works better for netflix data
 	ndcg_k = 10;
 	# initialize U, V
