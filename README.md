@@ -33,7 +33,7 @@ Our trained model can be tested in terms of NDCG@10, pairwise error and objectiv
 	$ Julia -p 4
 	```
 
-, where the option -p n provides n worker processes on the local machine. Use $ Julia -p 1 for single thread experiments.
+	, where the option -p n provides n worker processes on the local machine. Use $ Julia -p 	1 for single thread experiments.
 
 
 4. Type `$ include("code/primalCR.jl")` in Julia command line to load the functions for primal-CR algorithm. Similarly, to run the primal-CR++ algorithm, type `$ include("code/primalCRpp.jl")`.
