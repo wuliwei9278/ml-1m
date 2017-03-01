@@ -61,8 +61,8 @@ def num2comp(filename, output):
   trainALL_csv = open(output + '_train_ratingsALL.csv', 'w')
   train_csv = [train200_csv, trainALL_csv]
   #train_csv = [train100_csv, train200_csv, train500_csv, trainALL_csv]
-  test_lsvm = open(output + '_test_ratings.lsvm', 'w')  
-  test_csv = open(output + '_test_ratings.csv', 'w')  
+  test_lsvm = open(output + '_test_ratings10.lsvm', 'w')  
+  test_csv = open(output + '_test_ratings10.csv', 'w')  
   for u in xrange(1, n_users+1):
     ratings_list = []
 
