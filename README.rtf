@@ -1,0 +1,47 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf810
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}.}{\leveltext\leveltemplateid101\'02\'00.;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid2}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}}
+\margl1440\margr1440\vieww12600\viewh7800\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\b\fs36 \cf0 Large-scale Collaborative Ranking in Near-Linear Time\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\b0\fs24 \cf0 ================================================================================\
+This repo consists of three folders:\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls1\ilvl0\cf0 {\listtext	\'95	}data folder: sample data \'93MovieLens1m.csv\'94 can be found there, the data is of the form: \'93user id, movie id, rating\'94.\
+{\listtext	\'95	}util folder: python scripts to divide data into training and testing dataset (instructions on how to use these utilities functions are given below).\
+{\listtext	\'95	}code folder: Julia code which implements the primal-CR and primal-CR++ algorithm described in the paper is put into this folder (instructions on how to run the codes are given below).\
+{\listtext	\'95	}experimental folder: all the un-cleaned codes we initially wrote are put in this folder.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 ================================================================================\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\b\fs28 \cf0 Instructions on how to run the code:
+\b0\fs24 \
+Our trained model can be tested in terms of NDCG@10, pairwise error and objective function.\
+\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
+\ls2\ilvl0\cf0 {\listtext	1.	}Prepare a dataset of the form (user, item, ratings) triple in csv file. (Example: data/MovieLens1m.csv)\
+{\listtext	2.	}Run util/split1.py to get training data and test data by specifying the number of subsamples N to use as what we did in Section 5.1 in the paper or run util/split2.py to get multiple training data of C = 100, 200, d2 but the same test data as what we did in Section 5.3: \uc0\u8232 E.g. $ python util/split1.py data/MovieLens1m.csv -o ml1m -n 200\
+		        $ python util/split2.py data/MovieLens1m.csv -o ml1m\
+		, where the option -n specify the number of subsampled ratings per user N in Section 5.1 and -o specify the output file name prefix. (The scripts also generate the training ratings which can be used for other methods)\
+{\listtext	3. 	}Use command line to go to the repo folder and start Julia\
+    	E.g. $ Julia -p 4\
+		, where the option -p n provides n worker processes on the local machine. Use $ Julia -p 1 for single thread experiments.\
+{\listtext	4.  	}Type $ include(\'93code/primalCR.jl\'94) in Julia command line to load the functions for primal-CR algorithm. Similarly, to run the primal-CR++ algorithm, type $ include(\'93code/primalCRpp.jl\'94)     \
+{\listtext	5. 	}Type $ main("data/ml1m_train_ratings.csv", "data/ml1m_test_ratings.csv") in Julia command line. Stop after it starts printing and type again $ main("data/ml1m_train_ratings.csv", "data/ml1m_test_ratings.csv\'94). One can replace the arguments for the main function by changing the training data and test data file paths. The reason to type the same command twice is that the first time it includes the compilation time for Julia codes and the second time the codes will run much faster.\
+{\listtext	  	}\
+\
+\
+\
+\
+\
+\
+	\
+\
+}
