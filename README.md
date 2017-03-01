@@ -16,18 +16,22 @@ Our trained model can be tested in terms of NDCG@10, pairwise error and objectiv
 
 1. Prepare a dataset of the form (user, item, ratings) triple in csv file. (Example: data/MovieLens1m.csv)
 
-2. Run util/split1.py to get training data and test data by specifying the number of subsamples N to use as what we did in Section 5.1 in the paper or run util/split2.py to get multiple training data of C = 100, 200, d2 but the same test data as what we did in Section 5.3:  
+2. Run util/split1.py to get training data and test data by specifying the number of subsamples N to use as what we did in Section 5.1 in the paper 
+**or** 
+Run util/split2.py to get multiple training data of C = 100, 200, d2 but the same test data as what we did in Section 5.3:  
 
 	
 	```
 	$ python util/split1.py data/MovieLens1m.csv -o ml1m -n 200
+	```
+
+	```
 	$ python util/split2.py data/MovieLens1m.csv -o ml1m
 	```
-	
 
     , where the option -n specify the number of subsampled ratings per user N in Section 5.1 and -o specify the output file name prefix. The datasets generated will be in the current folder you type the command, i.e. the repo folder in the example. (The scripts also generate the training ratings which can be used for other methods)
 
-3. Use command line to go to the repo folder and start Julia
+3. Use command line to go to the repo folder and start Julia 
 
 	```
 	julia> julia -p 4
@@ -36,7 +40,15 @@ Our trained model can be tested in terms of NDCG@10, pairwise error and objectiv
 	, where the option -p n provides n worker processes on the local machine. Use $ Julia -p 	1 for single thread experiments.
 
 
-4. Type `julia> include("code/primalCR.jl")` in Julia command line to load the functions for primal-CR algorithm. Similarly, to run the primal-CR++ algorithm, type `julia> include("code/primalCRpp.jl")`.
+4. Type the following in Julia command line to load the functions for primal-CR algorithm:
+	```
+	julia> include("code/primalCR.jl")
+	```
+	Similarly, to run the primal-CR++ algorithm, type the following to include all necessary functions:
+	```
+	julia> include("code/primalCRpp.jl")
+	```
+
 
 5. Type in Julia command line 
 	```
