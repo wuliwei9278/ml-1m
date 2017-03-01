@@ -25,7 +25,7 @@ Our trained model can be tested in terms of NDCG@10, pairwise error and objectiv
 	```
 	
 
-    , where the option -n specify the number of subsampled ratings per user N in Section 5.1 and -o specify the output file name prefix. (The scripts also generate the training ratings which can be used for other methods)
+    , where the option -n specify the number of subsampled ratings per user N in Section 5.1 and -o specify the output file name prefix. The datasets generated will be in the current folder you type the command, i.e. the repo folder in the example. (The scripts also generate the training ratings which can be used for other methods)
 
 3. Use command line to go to the repo folder and start Julia
 
@@ -36,8 +36,8 @@ $ Julia -p 4
 , where the option -p n provides n worker processes on the local machine. Use $ Julia -p 1 for single thread experiments.
 
 
-4. Type `$ include(“code/primalCR.jl”)` in Julia command line to load the functions for primal-CR algorithm. Similarly, to run the primal-CR++ algorithm, type `$ include(“code/primalCRpp.jl”)`.
+4. Type `$ include("code/primalCR.jl")` in Julia command line to load the functions for primal-CR algorithm. Similarly, to run the primal-CR++ algorithm, type `$ include("code/primalCRpp.jl")`.
 
-5. Type `$ main("data/ml1m_train_ratings.csv", "data/ml1m_test_ratings.csv”, 100, 5000)`
-in Julia command line. Stop after it starts printing and type again `$ main("data/ml1m_train_ratings.csv", "data/ml1m_test_ratings.csv”, 100, 5000)`. One can replace the arguments for the main function by changing the training & test data file paths, and rank & lambda parameter in the model. The reason to type the same command twice in Julia command line is that the first time Julia will first compile the codes and the second time the codes will run much faster because the compilation time is saved.
+5. Type `$ main("ml1m_train_ratings.csv", "ml1m_test_ratings.csv", 100, 5000)`
+in Julia command line. Type `ctrl - c` to stop after it starts printing and type again `$ main("ml1m_train_ratings.csv", "ml1m_test_ratings.csv", 100, 5000)`. One can replace the arguments for the main function by changing the training & test data file paths, and rank & lambda parameter in the model. The reason to type the same command twice in Julia command line is that the first time Julia will first compile the codes and the second time the codes will run much faster because the compilation time is saved.
 

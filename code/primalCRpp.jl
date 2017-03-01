@@ -1467,6 +1467,8 @@ function main(train, test, r, lambda)
 	# n = 6040; msize = 3952;
 	# depending on the size of X, read n_users and n_items from python output
 	n = max(maximum(x), maximum(xx)); msize = max(maximum(y), maximum(yy));
+	println("Training dataset ", train, " and test dataset ", test, " are loaded. \n There are ", n, " users and ", msize, " items in the dataset.")
+
 	#n = 1496; msize = 3952; 
 	#n = 12851; msize = 65134
     #n = 221004; msize = 17771
