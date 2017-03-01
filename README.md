@@ -38,8 +38,10 @@ Run util/split2.py to get multiple training data of C = 100, 200, d2 but the sam
 	julia> julia -p 4
 	```
 
-	, where the option -p n provides n worker processes on the local machine. Use $ Julia -p 	1 for single thread experiments.
-
+	, where the option -p n provides n worker processes on the local machine. For single thread experiments, simply type the following in command line: 
+	```
+	julia> julia
+	```
 
 4. Type the following in Julia command line to load the functions for primal-CR algorithm:
 	```
