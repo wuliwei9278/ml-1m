@@ -25,11 +25,9 @@ Our trained model can be tested in terms of NDCG@10, pairwise error and objectiv
 Run util/split2.py to get multiple training data of C = 100, 200, d2 but the same test data as what we did in Section 5.3:  
 
 	
-
-	```
+	
 	$ python util/split2.py data/MovieLens1m.csv -o ml1m
 	
-	```
 
    
   , where the option -n specify the number of subsampled ratings per user N in Section 5.1 and -o specify the output file name prefix. The datasets generated will be in the current folder you type the command, i.e. the repo folder in the example. (The scripts also generate the training ratings which can be used for other methods)
