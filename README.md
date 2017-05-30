@@ -1,4 +1,13 @@
 # Large-scale Collaborative Ranking in Near-Linear Time
+## Announcement
+The paper has been accepted by KDD’17, Halifax, Nova Scotia, Canada. 
+I will give oral presentation on this work at Halifax sometime between August 13 - 17, 2017.
+
+You can cite the work as 
+```
+Large-scale Collaborative Ranking in Near-Linear Time , Liwei Wu, Cho-Jui Hsieh, James Sharpnack. To appear in ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD), 2017.
+```
+
 ## Description: 
 This repo consists of four folders:
 - data folder: sample data “MovieLens1m.csv” can be found there, the data is of the form: “user id, movie id, rating”.
