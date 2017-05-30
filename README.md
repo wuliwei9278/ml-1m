@@ -3,9 +3,9 @@
 - The paper has been accepted for oral presentation (8.5% acceptance rate) by KDD’17, Halifax, Nova Scotia, Canada (http://www.kdd.org/kdd2017/accepted-papers).
 - I will give an oral presentation about this work at Halifax sometime between August 13 - 17, 2017 (exact date and time to be announced later).
 - You can cite the work as 
-```
+
 Large-scale Collaborative Ranking in Near-Linear Time , Liwei Wu, Cho-Jui Hsieh, James Sharpnack. To appear in ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD), 2017.
-```
+
 
 ## Description: 
 This repo consists of four folders:
