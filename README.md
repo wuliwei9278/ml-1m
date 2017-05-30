@@ -4,7 +4,7 @@
 - I will give an oral presentation about this work at Halifax sometime between August 13 - 17, 2017 (exact date and time to be announced later).
 - You can cite the work as 
 
-Large-scale Collaborative Ranking in Near-Linear Time , Liwei Wu, Cho-Jui Hsieh, James Sharpnack. To appear in ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD), 2017.
+> Large-scale Collaborative Ranking in Near-Linear Time , Liwei Wu, Cho-Jui Hsieh, James Sharpnack. To appear in ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD), 2017.
 
 
 ## Description: 
